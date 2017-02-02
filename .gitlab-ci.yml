@@ -1,13 +1,29 @@
 image: "scorpil/rust:stable"
 
 before_script:
-  - apt-get update -qq && apt-get install -y -qq libssl-dev pkg-config
+  - apt-get update -qq && apt-get install -y -qq libssl-dev pkg-config libopus-dev
   - cargo --version
   - rustc --version
 
-
 stages:
+  - test
   - build
+  - deploy
+
+test:
+  stage: test
+  script: cargo test
+
+deploy_vps:
+  stage: deploy
+  script:
+    - echo "No deploy set up yet"
+  environment:
+    name: taha vps
+  only:
+  - master
+
+
 
 build:
   stage: build
@@ -19,4 +35,5 @@ build:
   artifacts:
     paths:
       - target/release/discord-markov-bot
+
 
