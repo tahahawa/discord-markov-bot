@@ -1,0 +1,21 @@
+image: "scorpil/rust:stable"
+
+before_script:
+  - cargo --version
+  - rustc --version
+
+
+stages:
+  - build
+
+build:
+  stage: build
+  script:
+    - cargo build --release
+  cache:
+    paths:
+      - target/
+  artifacts:
+    paths:
+      - target/release/discord-markov-bot
+
