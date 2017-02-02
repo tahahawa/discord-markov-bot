@@ -1,0 +1,8 @@
+[package]
+name = "discord-markov-bot"
+version = "0.1.0"
+authors = ["Taha Hawa <tahahawa@gmail.com>"]
+
+[dependencies]
+discord = "0.7.0"
+
