@@ -3,31 +3,6 @@ stages:
   - test
   - deploy
 
-test:
-  image: "scorpil/rust:stable"
-  before_script:
-    - apt-get update -qq && apt-get install -y -qq libssl-dev pkg-config libsodium-dev
-    - cargo --version
-    - rustc --version
-  stage: test
-  cache:
-    untracked: true
-    paths:
-      - target/
-  script: cargo test --release
-
-deploy_vps:
-  image: "governmentpaas/curl-ssl"
-  stage: deploy
-  script:
-    - curl https://tahahawa.me/deploy_markov_bot -o /dev/null
-  environment:
-    name: taha vps
-  only:
-  - master
-
-
-
 build:
   image: "scorpil/rust:stable"
   before_script:
@@ -45,4 +20,25 @@ build:
     paths:
       - target/release/discord-markov-bot
 
+test:
+  image: "scorpil/rust:stable"
+  before_script:
+    - apt-get update -qq && apt-get install -y -qq libssl-dev pkg-config libsodium-dev
+    - cargo --version
+    - rustc --version
+  stage: test
+  cache:
+    untracked: true
+    paths:
+      - target/
+  script: cargo test --release
 
+  deploy_vps:
+  image: "governmentpaas/curl-ssl"
+  stage: deploy
+  script:
+    - curl https://tahahawa.me/deploy_markov_bot -o /dev/null
+  environment:
+    name: taha vps
+  only:
+  - master
