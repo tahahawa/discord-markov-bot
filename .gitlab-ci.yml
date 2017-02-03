@@ -33,7 +33,7 @@ test:
       - target/
   script: cargo test --release
 
-  deploy_vps:
+deploy_vps:
   image: "governmentpaas/curl-ssl"
   stage: deploy
   script:
