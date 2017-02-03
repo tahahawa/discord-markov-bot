@@ -12,7 +12,7 @@ stages:
 
 test:
   stage: test
-  script: cargo test
+  script: cargo test --release
 
 deploy_vps:
   stage: deploy
