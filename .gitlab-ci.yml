@@ -13,6 +13,7 @@ stages:
 test:
   stage: test
   cache:
+    untracked: true
     paths:
       - target/
   script: cargo test --release
@@ -33,6 +34,7 @@ build:
   script:
     - cargo build --release
   cache:
+    untracked: true
     paths:
       - target/
   artifacts:
