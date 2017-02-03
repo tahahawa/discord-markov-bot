@@ -17,13 +17,12 @@ test:
   script: cargo test --release
 
 deploy_vps:
-  image: "byrnedo/alpine-curl"
+  image: "governmentpaas/curl-ssl"
   stage: deploy
   script:
     - curl https://tahahawa.me/deploy_markov_bot -o /dev/null
   environment:
     name: taha vps
-    url: https://tahahawa.me/deploy_markov_bot
   only:
   - master
 
