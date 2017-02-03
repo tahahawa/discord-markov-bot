@@ -12,6 +12,9 @@ stages:
 
 test:
   stage: test
+  cache:
+    paths:
+      - target/
   script: cargo test --release
 
 deploy_vps:
