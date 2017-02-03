@@ -4,7 +4,12 @@ version = "0.1.0"
 authors = ["Taha Hawa <tahahawa@gmail.com>"]
 
 [dependencies]
-discord = { git = "https://github.com/SpaceManiac/discord-rs" }
 serde = "0.8"
 serde_yaml = "0.5"
+
+[dependencies.serenity]
+git = "https://github.com/zeyla/serenity.git"
+default-features = false
+features = ["cache", "framework"]
+
 
