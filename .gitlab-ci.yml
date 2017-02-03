@@ -6,7 +6,7 @@ stages:
 test:
   image: "scorpil/rust:stable"
   before_script:
-    - apt-get update -qq && apt-get install -y -qq libssl-dev pkg-config libopus-dev libsodium-dev
+    - apt-get update -qq && apt-get install -y -qq libssl-dev pkg-config libsodium-dev
     - cargo --version
     - rustc --version
   stage: test
@@ -23,7 +23,6 @@ deploy_vps:
     - curl https://tahahawa.me/deploy_markov_bot -o /dev/null
   environment:
     name: taha vps
-    url: https://tahahawa.me/deploy_markov_bot
   only:
   - master
 
@@ -32,7 +31,7 @@ deploy_vps:
 build:
   image: "scorpil/rust:stable"
   before_script:
-    - apt-get update -qq && apt-get install -y -qq libssl-dev pkg-config libopus-dev libsodium-dev
+    - apt-get update -qq && apt-get install -y -qq libssl-dev pkg-config libsodium-dev
     - cargo --version
     - rustc --version
   stage: build
