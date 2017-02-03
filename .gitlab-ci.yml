@@ -1,16 +1,14 @@
-image: "scorpil/rust:stable"
-
-before_script:
-  - apt-get update -qq && apt-get install -y -qq libssl-dev pkg-config libopus-dev libsodium-dev
-  - cargo --version
-  - rustc --version
-
 stages:
   - build
   - test
   - deploy
 
 test:
+  image: "scorpil/rust:stable"
+  before_script:
+    - apt-get update -qq && apt-get install -y -qq libssl-dev pkg-config libopus-dev libsodium-dev
+    - cargo --version
+    - rustc --version
   stage: test
   cache:
     untracked: true
@@ -19,17 +17,24 @@ test:
   script: cargo test --release
 
 deploy_vps:
+  image: "byrnedo/alpine-curl"
   stage: deploy
   script:
     - curl https://tahahawa.me/deploy_markov_bot -o /dev/null
   environment:
     name: taha vps
+    url: https://tahahawa.me/deploy_markov_bot
   only:
   - master
 
 
 
 build:
+  image: "scorpil/rust:stable"
+  before_script:
+    - apt-get update -qq && apt-get install -y -qq libssl-dev pkg-config libopus-dev libsodium-dev
+    - cargo --version
+    - rustc --version
   stage: build
   script:
     - cargo build --release
