@@ -6,6 +6,7 @@ authors = ["Taha Hawa <tahahawa@gmail.com>"]
 [dependencies]
 serde = "0.8"
 serde_yaml = "0.5"
+rusqlite = "0.9.5"
 
 [dependencies.serenity]
 git = "https://github.com/zeyla/serenity.git"
