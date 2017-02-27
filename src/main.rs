@@ -41,6 +41,28 @@ fn main() {
     // start listening for events by starting a single shard
     let _ = client.start();
 
+    client.on_ready(|_ctx, ready| {
+        println!("{} is connected!", ready.user.name);
+        println!("{}", ready.);
+
+        for chan in ready.channels {
+            let _messages = channel.get_messages(|g| g.after(id).limit(100));
+
+            while (!_messages.is_empty() && _messages.len() > 0) {
+
+                for message in _messages {
+                    conn.execute("INSERT INTO messages (id, author, content, timestamp)
+                  VALUES (?1, ?2, ?3, ?4)",
+                                 &[&message.id,
+                                   &message.author,
+                                   &message.content,
+                                   &message.timestamp])
+                        .unwrap();
+                }
+            }
+        }
+    });
+
 }
 
 command!(ping(_context, message) {
