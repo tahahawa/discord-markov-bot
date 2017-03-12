@@ -42,7 +42,8 @@ deploy_vps:
   image: "governmentpaas/curl-ssl"
   stage: deploy
   script:
-    - curl https://tahahawa.me/deploy_markov_bot -o /dev/null
+    - curl --version
+    - curl https://tahahawa.me/deploy_markov_bot -f -m 300 -# -S
   environment:
     name: taha vps
   only:
