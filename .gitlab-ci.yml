@@ -16,6 +16,7 @@ build:
     untracked: true
     paths:
       - target/
+      - ~/.cargo
   artifacts:
     paths:
       - target/release/discord-markov-bot
@@ -31,6 +32,7 @@ test:
     untracked: true
     paths:
       - target/
+      - ~/.cargo
   script: cargo test --release
 
 deploy_vps:
