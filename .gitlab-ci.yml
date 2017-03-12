@@ -3,6 +3,9 @@ stages:
   - test
   - deploy
 
+variables:
+  CARGO_HOME: $CI_PROJECT_DIR/cargo
+
 build:
   image: "scorpil/rust:stable"
   before_script:
@@ -16,7 +19,7 @@ build:
     untracked: true
     paths:
       - target/
-      - ~/.cargo
+      - cargo/
   artifacts:
     paths:
       - target/release/discord-markov-bot
@@ -32,7 +35,7 @@ test:
     untracked: true
     paths:
       - target/
-      - ~/.cargo
+      - cargo/
   script: cargo test --release
 
 deploy_vps:
