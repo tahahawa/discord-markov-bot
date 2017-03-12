@@ -167,7 +167,7 @@ fn download_all_messages(guild: serenity::model::Guild,
 
         let mut biggestID = biggestID.unwrap().0;
         println!("biggest ID: {}", biggestID);
-        
+
         let biggestIDrow: Result<String, _> =
             on_ready_conn.query_row("SELECT * FROM messages where id = ?",
                                     &[&(biggestID.to_string())],
@@ -213,10 +213,7 @@ fn download_all_messages(guild: serenity::model::Guild,
             let message_vec = _messages.to_vec();
             for message in message_vec {
 
-                let on_ready_loop_pool = pool.clone();
-                let on_ready_loop_conn = on_ready_loop_pool.get().unwrap();
-
-                let _ = on_ready_loop_conn.execute("INSERT or REPLACE INTO messages (id, channel_id, author, content, timestamp) \
+                let _ = on_ready_conn.execute("INSERT or REPLACE INTO messages (id, channel_id, author, content, timestamp) \
                                           VALUES (?1, ?2, ?3, ?4, ?5)",
                                           &[&(message.id.0.to_string()),
                                             &(channel_id.to_string()),
@@ -245,7 +242,7 @@ fn download_all_messages(guild: serenity::model::Guild,
                 break;
             } else {
                 let try = chan.0.get_messages(|g| {
-                                                  g.after(serenity::model::MessageId(id as u64))
+                                                  g.after(serenity::model::MessageId(id2 as u64))
                                                       .limit(100)
                                               });
 
