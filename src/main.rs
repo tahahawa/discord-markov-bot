@@ -122,7 +122,7 @@ command!(impersonate(_context, message) {
         let conn = pool.get().unwrap();
 
         let mut stmt = conn.prepare("SELECT * FROM messages where author = :id" ).unwrap();
-        let mut rows = stmt.query_map_named(&[ (":id", &(user.id.0.to_string())) ],  |row| row.get(2)).unwrap();
+        let mut rows = stmt.query_map_named(&[ (":id", &(user.id.0.to_string())) ],  |row| row.get(3)).unwrap();
 
         for content in rows {
             let dbstr: String = content.unwrap();
@@ -256,4 +256,5 @@ fn download_all_messages(guild: serenity::model::Guild,
             }
         }
     }
+    println!("Downloaded all messages for {:?}", guild);
 }
