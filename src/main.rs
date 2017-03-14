@@ -157,38 +157,36 @@ fn download_all_messages(guild: serenity::model::Guild,
         let on_ready_pool = pool.clone();
         let on_ready_conn = on_ready_pool.get().unwrap();
 
-        let mut biggestID = chan.1.last_message_id;
-        let mut biggestIDrow: Result<i64, rusqlite::Error>;
+        let biggest_id = chan.1.last_message_id;
 
-        if biggestID == None {
+        if biggest_id == None {
             println!("skipped, no latest message exists");
             continue;
         }
 
-        let mut biggestID = biggestID.unwrap().0;
-        //println!("biggest ID: {}", biggestID);
+        let biggest_id = biggest_id.unwrap().0;
+        //println!("biggest ID: {}", biggest_id);
 
-        let biggestIDrow: Result<String, _> =
+        let biggest_id_row: Result<String, _> =
             on_ready_conn.query_row("SELECT * FROM messages where id = ?",
-                                    &[&(biggestID.to_string())],
+                                    &[&(biggest_id.to_string())],
                                     |row| match row.get(0) {
                                         None::<String> => 0.to_string(),
                                         _ => row.get(0),
                                     });
 
-        match biggestIDrow {
-            Result::Ok(biggestIDrow) => continue,
-            Result::Err(biggestIDrow) => (),
+        match biggest_id_row {
+            Result::Ok(biggest_id_row) => continue,
+            Result::Err(biggest_id_row) => (),
         }
 
 
-        let row: Result<String, _> =
-            on_ready_conn.query_row("SELECT MAX(id) FROM messages where channel_id = ?",
-                                    &[&channel_id.to_string()],
-                                    |row| match row.get(0) {
-                                        None::<String> => 0.to_string(),
-                                        _ => row.get(0),
-                                    });
+        let row: Result<String, _> = on_ready_conn.query_row("SELECT MAX(id) FROM messages where channel_id = ?",
+                                                             &[&channel_id.to_string()],
+                                                             |row| match row.get(0) {
+                                                                 None::<String> => 0.to_string(),
+                                                                 _ => row.get(0),
+                                                             });
 
         let id: u64 = row.unwrap().parse::<u64>().unwrap();
 
@@ -238,7 +236,7 @@ fn download_all_messages(guild: serenity::model::Guild,
                     Err(try) => println!("error getting messages"),
                     _ => _messages = try.unwrap(),
                 }
-            } else if id2 >= biggestID  {
+            } else if id2 >= biggest_id {
                 break;
             } else {
                 let try = chan.0.get_messages(|g| {
