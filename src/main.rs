@@ -87,19 +87,21 @@ fn main() {
                            });
 
     client.on_message(|_ctx, message| {
-                        let mut data = _ctx.data.lock().unwrap();
-                        let sql_pool = data.get_mut::<Sqlpool>().unwrap();
+        let mut data = _ctx.data.lock().unwrap();
+        let sql_pool = data.get_mut::<Sqlpool>().unwrap();
 
-                        let conn = sql_pool.get().unwrap();
+        insert_into_db(sql_pool,
+                       message.id.0.to_string(),
+                       message.channel_id.0.to_string(),
+                       message.author
+                           .id
+                           .0
+                           .to_string(),
+                       message.content,
+                       message.timestamp);
 
-                        let _ = conn.execute("INSERT or REPLACE INTO messages (id, channel_id, author, content, timestamp) \
-                                          VALUES (?1, ?2, ?3, ?4)",
-                                          &[&(message.id.0.to_string()),
-                                            &(message.channel_id.0.to_string()),
-                                            &(message.author.id.0.to_string()),
-                                            &message.content,
-                                            &message.timestamp]);
-                    });
+        println!("added message on_message: {}", message.id.0.to_string());
+    });
 
     // start listening for events by starting a single shard
     if let Err(why) = client.start() {
@@ -146,7 +148,7 @@ fn download_all_messages(guild: serenity::model::Guild,
         let mut _messages = Vec::new();
         let channel_id = (chan.0).0;
 
-        println!("{:?}", chan);
+        println!("{:?}", chan.1.name);
         println!("");
         println!("");
 
@@ -154,8 +156,7 @@ fn download_all_messages(guild: serenity::model::Guild,
             continue;
         }
 
-        let on_ready_pool = pool.clone();
-        let on_ready_conn = on_ready_pool.get().unwrap();
+        let conn = pool.get().unwrap();
 
         let biggest_id = chan.1.last_message_id;
 
@@ -167,28 +168,12 @@ fn download_all_messages(guild: serenity::model::Guild,
         let biggest_id = biggest_id.unwrap().0;
         //println!("biggest ID: {}", biggest_id);
 
-        let biggest_id_row: Result<String, _> =
-            on_ready_conn.query_row("SELECT * FROM messages where id = ?",
-                                    &[&(biggest_id.to_string())],
-                                    |row| match row.get(0) {
-                                        None::<String> => 0.to_string(),
-                                        _ => row.get(0),
-                                    });
-
-        match biggest_id_row {
-            Result::Ok(biggest_id_row) => continue,
-            Result::Err(biggest_id_row) => (),
+        if biggest_id_exists_in_db(biggest_id, pool) {
+            continue;
         }
 
 
-        let row: Result<String, _> = on_ready_conn.query_row("SELECT MAX(id) FROM messages where channel_id = ?",
-                                                             &[&channel_id.to_string()],
-                                                             |row| match row.get(0) {
-                                                                 None::<String> => 0.to_string(),
-                                                                 _ => row.get(0),
-                                                             });
-
-        let id: u64 = row.unwrap().parse::<u64>().unwrap();
+        let id = get_latest_id_for_channel(channel_id, pool);
 
         if id == 0 {
             //println!("no message ID");
@@ -210,24 +195,21 @@ fn download_all_messages(guild: serenity::model::Guild,
         while !_messages.is_empty() && _messages.len() > 0 {
             let message_vec = _messages.to_vec();
             for message in message_vec {
-
-                let _ = on_ready_conn.execute("INSERT or REPLACE INTO messages (id, channel_id, author, content, timestamp) \
-                                          VALUES (?1, ?2, ?3, ?4, ?5)",
-                                          &[&(message.id.0.to_string()),
-                                            &(channel_id.to_string()),
-                                            &(message.author.id.0.to_string()),
-                                            &message.content,
-                                            &message.timestamp]);
+                
+                insert_into_db(pool,
+                               message.id.0.to_string(),
+                               message.channel_id.0.to_string(),
+                               message.author
+                                   .id
+                                   .0
+                                   .to_string(),
+                               message.content,
+                               message.timestamp);
 
                 //println!("{:?}", message);
             }
 
-            let row2: Result<String, _> =
-                on_ready_conn.query_row("SELECT MAX(id) FROM messages where channel_id = ?",
-                                        &[&channel_id.to_string()],
-                                        |row| row.get(0));
-
-            let id2 = row2.unwrap().parse::<u64>().unwrap();
+            let id2 = get_latest_id_for_channel(channel_id, pool);
 
             if id2 == 0 {
                 //println!("no message ID");
@@ -255,4 +237,54 @@ fn download_all_messages(guild: serenity::model::Guild,
         }
     }
     println!("Downloaded all messages for {:?}", guild);
+}
+
+fn biggest_id_exists_in_db(biggest_id: u64, pool: &r2d2::Pool<SqliteConnectionManager>) -> bool {
+    let conn = pool.get().unwrap();
+
+    let biggest_id_row: Result<String, _> =
+        conn.query_row("SELECT * FROM messages where id = ?",
+                       &[&(biggest_id.to_string())],
+                       |row| match row.get(0) {
+                           None::<String> => 0.to_string(),
+                           _ => row.get(0),
+                       });
+
+    match biggest_id_row {
+        Result::Ok(biggest_id_row) => true,
+        Result::Err(biggest_id_row) => false,
+    }
+}
+
+fn get_latest_id_for_channel(channel_id: u64, pool: &r2d2::Pool<SqliteConnectionManager>) -> u64 {
+
+    let conn = pool.get().unwrap();
+
+    let row: Result<String, _> = conn.query_row("SELECT MAX(id) FROM messages where channel_id = ?",
+                                                &[&channel_id.to_string()],
+                                                |row| match row.get(0) {
+                                                    None::<String> => 0.to_string(),
+                                                    _ => row.get(0),
+                                                });
+
+    row.unwrap().parse::<u64>().unwrap()
+}
+
+fn insert_into_db(pool: &r2d2::Pool<SqliteConnectionManager>,
+                  message_id: String,
+                  channel_id: String,
+                  message_author: String,
+                  message_content: String,
+                  message_timestamp: String) {
+
+    let conn = pool.get().unwrap();
+
+    let _ = conn.execute("INSERT or REPLACE INTO messages (id, channel_id, author, content, timestamp) \
+                                          VALUES (?1, ?2, ?3, ?4, ?5)",
+                         &[&message_id,
+                           &(channel_id),
+                           &(message_author),
+                           &message_content,
+                           &message_timestamp]);
+
 }
