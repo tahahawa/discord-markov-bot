@@ -242,7 +242,7 @@ fn download_all_messages(guild: serenity::model::Guild,
             }
         }
     }
-    println!("Downloaded all messages for {:?}", guild);
+    println!("Downloaded all messages for {:?}", guild.name );
 }
 
 fn biggest_id_exists_in_db(biggest_id: u64, pool: &r2d2::Pool<SqliteConnectionManager>) -> bool {
