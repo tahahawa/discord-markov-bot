@@ -121,7 +121,7 @@ command!(impersonate(_context, message) {
         let mut pool = data.get_mut::<Sqlpool>().unwrap();
         let conn = pool.get().unwrap();
 
-        let mut stmt = conn.prepare("SELECT * FROM messages where author = :id" ).unwrap();
+        let mut stmt = conn.prepare("SELECT * FROM messages where author = :id and content not like '%~impersonate%' and not like '%~ping%' " ).unwrap();
         let mut rows = stmt.query_map_named(&[ (":id", &(user.id.0.to_string())) ],  |row| row.get(3)).unwrap();
 
         for content in rows {
@@ -166,7 +166,7 @@ fn download_all_messages(guild: serenity::model::Guild,
         }
 
         let mut biggestID = biggestID.unwrap().0;
-        println!("biggest ID: {}", biggestID);
+        //println!("biggest ID: {}", biggestID);
 
         let biggestIDrow: Result<String, _> =
             on_ready_conn.query_row("SELECT * FROM messages where id = ?",
@@ -251,7 +251,7 @@ fn download_all_messages(guild: serenity::model::Guild,
                     _ => _messages = try.unwrap(),
                 }
 
-                println!("id2: {:?}", id2);
+                //println!("id2: {:?}", id2);
                 //println!("{:?}", _messages);
             }
         }
