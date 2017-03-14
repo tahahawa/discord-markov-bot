@@ -21,6 +21,7 @@ use serenity::client::Client;
 pub type SqlitePool = r2d2::Pool<SqliteConnectionManager>;
 
 pub struct Sqlpool;
+
 impl Key for Sqlpool {
     type Value = SqlitePool;
 }
@@ -126,14 +127,19 @@ command!(impersonate(_context, message) {
         let mut stmt = conn.prepare("SELECT * FROM messages where author = :id and content not like '%~impersonate%' and content not like '%~ping%' " ).unwrap();
         let mut rows = stmt.query_map_named(&[ (":id", &(user.id.0.to_string())) ],  |row| row.get(3)).unwrap();
 
+        let mut messages = Vec::<String>::new();
         for content in rows {
-            let dbstr: String = content.unwrap();
-            let chainstr: &str = &*dbstr;
-            chain.feed_str(chainstr);
+            messages.push(content.unwrap());
             }
 
-        let _ = message.reply(&chain.generate_str());
-
+            if messages.len() > 0 {
+                for m in messages {
+                    chain.feed_str(&m);
+                }
+                let _ = message.reply(&chain.generate_str());
+            } else {
+                let _ = message.reply("They haven't said anything");
+            }
     }
     else {
         let _ = message.reply("No mention found");
