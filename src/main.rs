@@ -9,6 +9,7 @@ extern crate typemap;
 
 use std::fs::File;
 use std::io::Read;
+use std::ops::Deref;
 use std::collections::BTreeMap;
 use typemap::Key;
 
@@ -16,7 +17,9 @@ use r2d2_sqlite::SqliteConnectionManager;
 
 use markov::Chain;
 
-use serenity::client::Client;
+use serenity::client::{Client, Context};
+use serenity::model::Message;
+
 
 pub type SqlitePool = r2d2::Pool<SqliteConnectionManager>;
 
@@ -62,7 +65,11 @@ fn main() {
     client.with_framework(|f| {
                               f
         .configure(|c| c.prefix("~")) // set the bot's prefix to "~"
-        .on("ping", ping).on("impersonate", impersonate)
+        .on("ping", ping).command("impersonate", |c| c
+        .use_quotes(true)
+        .min_args(1)
+        .guild_only(true)
+        .exec(impersonate))
                           });
 
     {
@@ -101,11 +108,29 @@ fn main() {
                        message.content,
                        message.timestamp);
 
-        println!("added message on_message: {}", message.id.0.to_string());
+        //println!("added message on_message: {}", message.id.0.to_string());
     });
 
+        client.on_message_update(|_ctx, message| {
+        let mut data = _ctx.data.lock().unwrap();
+        let sql_pool = data.get_mut::<Sqlpool>().unwrap();
+
+        insert_into_db(sql_pool,
+                       message.id.0.to_string(),
+                       message.channel_id.0.to_string(),
+                       message.author.unwrap()
+                           .id
+                           .0
+                           .to_string(),
+                       message.content.unwrap(),
+                       message.timestamp.unwrap());
+
+        //println!("added message on_message_update: {}", message.id.0.to_string());
+    });
+
+
     // start listening for events by starting a single shard
-    if let Err(why) = client.start() {
+    if let Err(why) = client.start_autosharded() {
         println!("Client error: {:?}", why);
     }
 
@@ -115,9 +140,28 @@ command!(ping(_context, message) {
     let _ = message.reply("Pong!");
 });
 
-command!(impersonate(_context, message) {
-    if message.mentions.len() > 0 {
-        let ref user = message.mentions[0];
+fn get_guild_id_from_chan(chan: serenity::model::Channel) -> serenity::model::GuildId {
+
+        match chan {
+            serenity::model::Channel::Guild(guild_channel) =>  guild_channel.read().unwrap().guild_id,
+            _ => return serenity::model::GuildId(0),
+        }
+
+}
+
+fn impersonate(_context: &mut Context, message: &Message, _args: Vec<String>) -> Result<(), String>  {
+        let chan = _context.channel_id.unwrap().get().unwrap();
+        let members = get_guild_id_from_chan(chan).get_members(Some(1000), Some(0)).unwrap();
+
+        let mut user = None;
+        for m in members {
+            if m.display_name().to_lowercase() == _args[0].to_lowercase() {
+                user = Some(m.user.read().unwrap().clone());
+            }
+        }
+
+    if user.is_some() {
+        let user = user.unwrap();
         let mut chain: Chain<String> = Chain::new();
 
         let mut data = _context.data.lock().unwrap();
@@ -142,9 +186,11 @@ command!(impersonate(_context, message) {
             }
     }
     else {
-        let _ = message.reply("No mention found");
+        let _ = message.reply("No user found");
     }
-});
+    Ok(())
+
+}
 
 
 fn download_all_messages(guild: serenity::model::Guild,
