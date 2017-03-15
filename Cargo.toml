@@ -11,6 +11,7 @@ r2d2_sqlite = "0.1.2"
 rusqlite = "0.9"
 markov = "0.0.32"
 typemap = "0.3.3"
+regex = "0.2"
 
 [dependencies.serenity]
 git = "https://github.com/zeyla/serenity.git"

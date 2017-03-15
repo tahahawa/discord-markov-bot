@@ -6,10 +6,11 @@ extern crate r2d2_sqlite;
 extern crate rusqlite;
 extern crate markov;
 extern crate typemap;
+extern crate regex;
+
 
 use std::fs::File;
 use std::io::Read;
-use std::ops::Deref;
 use std::collections::BTreeMap;
 use typemap::Key;
 
@@ -17,9 +18,10 @@ use r2d2_sqlite::SqliteConnectionManager;
 
 use markov::Chain;
 
+use regex::Regex;
+
 use serenity::client::{Client, Context};
 use serenity::model::Message;
-
 
 pub type SqlitePool = r2d2::Pool<SqliteConnectionManager>;
 
@@ -63,14 +65,14 @@ fn main() {
 
     let mut client = Client::login_bot(&config.get("token").expect("token"));
     client.with_framework(|f| {
-                              f
+        f
         .configure(|c| c.prefix("~")) // set the bot's prefix to "~"
         .on("ping", ping).command("impersonate", |c| c
         .use_quotes(true)
         .min_args(1)
         .guild_only(true)
         .exec(impersonate))
-                          });
+    });
 
     {
         let mut data = client.data.lock().unwrap();
@@ -111,14 +113,15 @@ fn main() {
         //println!("added message on_message: {}", message.id.0.to_string());
     });
 
-        client.on_message_update(|_ctx, message| {
+    /*client.on_message_update(|_ctx, message| {
         let mut data = _ctx.data.lock().unwrap();
         let sql_pool = data.get_mut::<Sqlpool>().unwrap();
 
         insert_into_db(sql_pool,
                        message.id.0.to_string(),
                        message.channel_id.0.to_string(),
-                       message.author.unwrap()
+                       message.author
+                           .unwrap()
                            .id
                            .0
                            .to_string(),
@@ -126,7 +129,7 @@ fn main() {
                        message.timestamp.unwrap());
 
         //println!("added message on_message_update: {}", message.id.0.to_string());
-    });
+    });*/
 
 
     // start listening for events by starting a single shard
@@ -142,50 +145,102 @@ command!(ping(_context, message) {
 
 fn get_guild_id_from_chan(chan: serenity::model::Channel) -> serenity::model::GuildId {
 
-        match chan {
-            serenity::model::Channel::Guild(guild_channel) =>  guild_channel.read().unwrap().guild_id,
-            _ => return serenity::model::GuildId(0),
-        }
+    match chan {
+        serenity::model::Channel::Guild(guild_channel) => guild_channel.read().unwrap().guild_id,
+        _ => return serenity::model::GuildId(0),
+    }
 
 }
 
-fn impersonate(_context: &mut Context, message: &Message, _args: Vec<String>) -> Result<(), String>  {
-        let chan = _context.channel_id.unwrap().get().unwrap();
-        let members = get_guild_id_from_chan(chan).get_members(Some(1000), Some(0)).unwrap();
+//(<@\d*>)
+fn impersonate(_context: &mut Context,
+               message: &Message,
+               _args: Vec<String>)
+               -> Result<(), String> {
+    let chan = _context.channel_id
+        .unwrap()
+        .get()
+        .unwrap();
+    
+    let re = Regex::new(r"(<@\d*>)").unwrap();
 
-        let mut user = None;
-        for m in members {
-            if m.display_name().to_lowercase() == _args[0].to_lowercase() {
-                user = Some(m.user.read().unwrap().clone());
-            }
+    let members = get_guild_id_from_chan(chan).get_members(Some(1000), Some(0)).unwrap();
+
+    let mut user = None;
+    for m in members {
+        if m.display_name().to_lowercase() == _args[0].to_lowercase() {
+            user = Some(m.user
+                            .read()
+                            .unwrap()
+                            .clone());
         }
+    }
 
-    if user.is_some() {
+    if user.is_some() && _args.len() > 1 {
         let user = user.unwrap();
         let mut chain: Chain<String> = Chain::new();
 
         let mut data = _context.data.lock().unwrap();
-        let mut pool = data.get_mut::<Sqlpool>().unwrap();
+        let pool = data.get_mut::<Sqlpool>().unwrap();
         let conn = pool.get().unwrap();
 
         let mut stmt = conn.prepare("SELECT * FROM messages where author = :id and content not like '%~impersonate%' and content not like '%~ping%' " ).unwrap();
-        let mut rows = stmt.query_map_named(&[ (":id", &(user.id.0.to_string())) ],  |row| row.get(3)).unwrap();
+        let rows = stmt.query_map_named(&[(":id", &(user.id.0.to_string()))], |row| row.get(3))
+            .unwrap();
 
         let mut messages = Vec::<String>::new();
         for content in rows {
             messages.push(content.unwrap());
+        }
+
+        if messages.len() > 0 {
+            for m in messages {
+                chain.feed_str(&m);
             }
 
-            if messages.len() > 0 {
-                for m in messages {
-                    chain.feed_str(&m);
-                }
-                let _ = message.reply(&chain.generate_str());
-            } else {
-                let _ = message.reply("They haven't said anything");
+            let iter = _args.get(1)
+                .unwrap()
+                .parse::<usize>()
+                .unwrap();
+
+            let mut msg = String::new();
+
+            for line in chain.str_iter_for(iter) {
+                msg = msg + "\n" + &line;
+                println!("{}", line);
             }
-    }
-    else {
+
+            let _ = message.reply(&re.replace_all(&msg, "@mention").into_owned() );
+        } else {
+            let _ = message.reply("They haven't said anything");
+        }
+
+    } else if user.is_some() {
+        let user = user.unwrap();
+        let mut chain: Chain<String> = Chain::new();
+
+        let mut data = _context.data.lock().unwrap();
+        let pool = data.get_mut::<Sqlpool>().unwrap();
+        let conn = pool.get().unwrap();
+
+        let mut stmt = conn.prepare("SELECT * FROM messages where author = :id and content not like '%~impersonate%' and content not like '%~ping%' " ).unwrap();
+        let rows = stmt.query_map_named(&[(":id", &(user.id.0.to_string()))], |row| row.get(3))
+            .unwrap();
+
+        let mut messages = Vec::<String>::new();
+        for content in rows {
+            messages.push(content.unwrap());
+        }
+
+        if messages.len() > 0 {
+            for m in messages {
+                chain.feed_str(&m);
+            }
+            let _ = message.reply(&re.replace_all(&chain.generate_str(), "@mention" ).into_owned() );
+        } else {
+            let _ = message.reply("They haven't said anything");
+        }
+    } else {
         let _ = message.reply("No user found");
     }
     Ok(())
@@ -247,7 +302,7 @@ fn download_all_messages(guild: serenity::model::Guild,
         while !_messages.is_empty() && _messages.len() > 0 {
             let message_vec = _messages.to_vec();
             for message in message_vec {
-                
+
                 insert_into_db(pool,
                                message.id.0.to_string(),
                                message.channel_id.0.to_string(),
@@ -288,7 +343,7 @@ fn download_all_messages(guild: serenity::model::Guild,
             }
         }
     }
-    println!("Downloaded all messages for {:?}", guild.name );
+    println!("Downloaded all messages for {:?}", guild.name);
 }
 
 fn biggest_id_exists_in_db(biggest_id: u64, pool: &r2d2::Pool<SqliteConnectionManager>) -> bool {
