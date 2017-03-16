@@ -8,7 +8,6 @@ extern crate markov;
 extern crate typemap;
 extern crate regex;
 
-
 use std::fs::File;
 use std::io::Read;
 use std::collections::BTreeMap;
@@ -71,7 +70,7 @@ fn main() {
         .use_quotes(true)
         .min_args(1)
         .guild_only(true)
-        .exec(impersonate))
+        .exec(impersonate)).on("hivemind", hivemind)
     });
 
     {
@@ -142,6 +141,35 @@ fn main() {
 command!(ping(_context, message) {
     let _ = message.reply("Pong!");
 });
+
+command!(hivemind(_context, message) {
+    let re = Regex::new(r"(<@!?\d*>)").unwrap();
+
+        let mut chain: Chain<String> = Chain::new();
+
+        let mut data = _context.data.lock().unwrap();
+        let pool = data.get_mut::<Sqlpool>().unwrap();
+        let conn = pool.get().unwrap();
+
+        let mut stmt = conn.prepare("SELECT * FROM messages where content not like '%~impersonate%' and content not like '%~ping%' " ).unwrap();
+        let rows = stmt.query_map_named(&[], |row| row.get(3))
+            .unwrap();
+
+        let mut messages = Vec::<String>::new();
+        for content in rows {
+            messages.push(content.unwrap());
+        }
+
+        if messages.len() > 0 {
+            for m in messages {
+                chain.feed_str(&m);
+            }
+            let _ = message.reply(&re.replace_all(&chain.generate_str(), "@mention").into_owned());
+        } else {
+            let _ = message.reply("They haven't said anything");
+        }
+});
+
 
 fn get_guild_id_from_chan(chan: serenity::model::Channel) -> serenity::model::GuildId {
 
