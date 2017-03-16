@@ -161,7 +161,7 @@ fn impersonate(_context: &mut Context,
         .unwrap()
         .get()
         .unwrap();
-    
+
     let re = Regex::new(r"(<@!?\d*>)").unwrap();
 
     let members = get_guild_id_from_chan(chan).get_members(Some(1000), Some(0)).unwrap();
@@ -198,10 +198,17 @@ fn impersonate(_context: &mut Context,
                 chain.feed_str(&m);
             }
 
-            let iter = _args.get(1)
-                .unwrap()
-                .parse::<usize>()
-                .unwrap();
+            let re_iter = Regex::new(r"\D").unwrap();
+            let iter_test = re_iter.replace_all(_args.get(1).unwrap(), "");
+            let iter: usize = 1;
+
+            if !iter_test.is_empty() {
+                let iter = iter_test.parse::<usize>().unwrap();
+            }
+            else {
+                let iter = 1;
+            }
+            
 
             let mut msg = String::new();
 
@@ -210,7 +217,7 @@ fn impersonate(_context: &mut Context,
                 //println!("{}", line);
             }
 
-            let _ = message.reply(&re.replace_all(&msg, "@mention").into_owned() );
+            let _ = message.reply(&re.replace_all(&msg, "@mention").into_owned());
         } else {
             let _ = message.reply("They haven't said anything");
         }
@@ -236,7 +243,7 @@ fn impersonate(_context: &mut Context,
             for m in messages {
                 chain.feed_str(&m);
             }
-            let _ = message.reply(&re.replace_all(&chain.generate_str(), "@mention" ).into_owned() );
+            let _ = message.reply(&re.replace_all(&chain.generate_str(), "@mention").into_owned());
         } else {
             let _ = message.reply("They haven't said anything");
         }
