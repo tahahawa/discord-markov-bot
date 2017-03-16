@@ -162,7 +162,7 @@ fn impersonate(_context: &mut Context,
         .get()
         .unwrap();
     
-    let re = Regex::new(r"(<@\d*>)").unwrap();
+    let re = Regex::new(r"(<@!?\d*>)").unwrap();
 
     let members = get_guild_id_from_chan(chan).get_members(Some(1000), Some(0)).unwrap();
 
