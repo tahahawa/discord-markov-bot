@@ -207,7 +207,7 @@ fn impersonate(_context: &mut Context,
 
             for line in chain.str_iter_for(iter) {
                 msg = msg + "\n" + &line;
-                println!("{}", line);
+                //println!("{}", line);
             }
 
             let _ = message.reply(&re.replace_all(&msg, "@mention").into_owned() );
