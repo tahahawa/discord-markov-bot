@@ -84,24 +84,24 @@ fn main() {
     client.on_ready(|_ctx, ready| {
         println!("{} is connected!", ready.user.name);
         println!("{:?}", ready.guilds);
-        let mut data = _ctx.data.lock().unwrap();
-        let sql_pool = data.get_mut::<Sqlpool>().unwrap();
+        //let mut data = _ctx.data.lock().unwrap();
+        //let sql_pool = data.get_mut::<Sqlpool>().unwrap().clone();
 
         //download_all_messages(ready, sql_pool );
     });
 
     client.on_guild_create(|_ctx, guild| {
                                let mut data = _ctx.data.lock().unwrap();
-                               let sql_pool = data.get_mut::<Sqlpool>().unwrap();
+                               let sql_pool = data.get_mut::<Sqlpool>().unwrap().clone();
 
-                               download_all_messages(guild, sql_pool);
+                               download_all_messages(guild, &sql_pool);
                            });
 
     client.on_message(|_ctx, message| {
         let mut data = _ctx.data.lock().unwrap();
-        let sql_pool = data.get_mut::<Sqlpool>().unwrap();
+        let sql_pool = data.get_mut::<Sqlpool>().unwrap().clone();
 
-        insert_into_db(sql_pool,
+        insert_into_db(&sql_pool,
                        message.id.0.to_string(),
                        message.channel_id.0.to_string(),
                        message.author
@@ -176,13 +176,13 @@ fn impersonate(_context: &mut Context,
         }
     }
 
+        let mut data = _context.data.lock().unwrap();
+        let pool = data.get_mut::<Sqlpool>().unwrap().clone();
+        let conn = pool.get().unwrap();
+
     if user.is_some() && _args.len() > 1 {
         let user = user.unwrap();
         let mut chain: Chain<String> = Chain::new();
-
-        let mut data = _context.data.lock().unwrap();
-        let pool = data.get_mut::<Sqlpool>().unwrap();
-        let conn = pool.get().unwrap();
 
         let mut stmt = conn.prepare("SELECT * FROM messages where author = :id and content not like '%~hivemind%' and content not like '%~impersonate%' and content not like '%~ping%' " ).unwrap();
         let rows = stmt.query_map_named(&[(":id", &(user.id.0.to_string()))], |row| row.get(3))
@@ -222,10 +222,6 @@ fn impersonate(_context: &mut Context,
     } else if user.is_some() {
         let user = user.unwrap();
         let mut chain: Chain<String> = Chain::new();
-
-        let mut data = _context.data.lock().unwrap();
-        let pool = data.get_mut::<Sqlpool>().unwrap();
-        let conn = pool.get().unwrap();
 
         let mut stmt = conn.prepare("SELECT * FROM messages where author = :id and content not like '%~hivemind%' and content not like '%~impersonate%' and content not like '%~ping%' " ).unwrap();
         let rows = stmt.query_map_named(&[(":id", &(user.id.0.to_string()))], |row| row.get(3))
@@ -267,8 +263,6 @@ fn download_all_messages(guild: serenity::model::Guild,
             continue;
         }
 
-        let conn = pool.get().unwrap();
-
         let biggest_id = chan.1.last_message_id;
 
         if biggest_id == None {
@@ -290,7 +284,7 @@ fn download_all_messages(guild: serenity::model::Guild,
             //println!("no message ID");
             let try = chan.0.get_messages(|g| g.after(0).limit(100));
             match try {
-                Err(try) => println!("error getting messages"),
+                Err(_) => println!("error getting messages"),
                 _ => _messages = try.unwrap(),
             }
         } else {
@@ -298,7 +292,7 @@ fn download_all_messages(guild: serenity::model::Guild,
                 chan.0.get_messages(|g| g.after(serenity::model::MessageId(id as u64)).limit(100));
 
             match try {
-                Err(try) => println!("error getting messages"),
+                Err(_) => println!("error getting messages"),
                 _ => _messages = try.unwrap(),
             }
         }
@@ -326,7 +320,7 @@ fn download_all_messages(guild: serenity::model::Guild,
                 //println!("no message ID");
                 let try = chan.0.get_messages(|g| g.after(0).limit(100));
                 match try {
-                    Err(try) => println!("error getting messages"),
+                    Err(_) => println!("error getting messages"),
                     _ => _messages = try.unwrap(),
                 }
             } else if id2 >= biggest_id {
@@ -338,7 +332,7 @@ fn download_all_messages(guild: serenity::model::Guild,
                                               });
 
                 match try {
-                    Err(try) => println!("error getting messages"),
+                    Err(_) => println!("error getting messages"),
                     _ => _messages = try.unwrap(),
                 }
 
@@ -362,8 +356,8 @@ fn biggest_id_exists_in_db(biggest_id: u64, pool: &r2d2::Pool<SqliteConnectionMa
                        });
 
     match biggest_id_row {
-        Result::Ok(biggest_id_row) => true,
-        Result::Err(biggest_id_row) => false,
+        Result::Ok(_) => true,
+        Result::Err(_) => false,
     }
 }
 
@@ -406,7 +400,7 @@ command!(hivemind(_context, message) {
         let mut chain: Chain<String> = Chain::new();
 
         let mut data = _context.data.lock().unwrap();
-        let pool = data.get_mut::<Sqlpool>().unwrap();
+        let pool = data.get_mut::<Sqlpool>().unwrap().clone();
         let conn = pool.get().unwrap();
 
         let mut stmt = conn.prepare("SELECT * FROM messages where content not like '%~hivemind%' and content not like '%~impersonate%' and content not like '%~ping%' " ).unwrap();
