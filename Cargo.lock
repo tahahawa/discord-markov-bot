@@ -1,6 +1,6 @@
 [root]
 name = "discord-markov-bot"
-version = "0.1.0"
+version = "0.2.2"
 dependencies = [
  "markov 0.0.32 (registry+https://github.com/rust-lang/crates.io-index)",
  "r2d2 0.7.1 (registry+https://github.com/rust-lang/crates.io-index)",
