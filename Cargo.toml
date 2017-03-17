@@ -17,4 +17,3 @@ regex = "0.2"
 git = "https://github.com/zeyla/serenity.git"
 default-features = false
 features = ["cache", "framework"]
-
