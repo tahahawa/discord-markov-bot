@@ -66,11 +66,13 @@ fn main() {
     client.with_framework(|f| {
         f
         .configure(|c| c.prefix("~")) // set the bot's prefix to "~"
-        .on("ping", ping).command("impersonate", |c| c
+        .on("ping", ping)
+        .on("hivemind", hivemind)
+        .command("impersonate", |c| c
         .use_quotes(true)
         .min_args(1)
         .guild_only(true)
-        .exec(impersonate)).on("hivemind", hivemind)
+        .exec(impersonate))
     });
 
     {
@@ -142,35 +144,6 @@ command!(ping(_context, message) {
     let _ = message.reply("Pong!");
 });
 
-command!(hivemind(_context, message) {
-    let re = Regex::new(r"(<@!?\d*>)").unwrap();
-
-        let mut chain: Chain<String> = Chain::new();
-
-        let mut data = _context.data.lock().unwrap();
-        let pool = data.get_mut::<Sqlpool>().unwrap();
-        let conn = pool.get().unwrap();
-
-        let mut stmt = conn.prepare("SELECT * FROM messages where content not like '%~hivemind%' and content not like '%~impersonate%' and content not like '%~ping%' " ).unwrap();
-        let rows = stmt.query_map_named(&[], |row| row.get(3))
-            .unwrap();
-
-        let mut messages = Vec::<String>::new();
-        for content in rows {
-            messages.push(content.unwrap());
-        }
-
-        if messages.len() > 0 {
-            for m in messages {
-                chain.feed_str(&m);
-            }
-            let _ = message.reply(&re.replace_all(&chain.generate_str(), "@mention").into_owned());
-        } else {
-            let _ = message.reply("They haven't said anything");
-        }
-});
-
-
 fn get_guild_id_from_chan(chan: serenity::model::Channel) -> serenity::model::GuildId {
 
     match chan {
@@ -180,7 +153,6 @@ fn get_guild_id_from_chan(chan: serenity::model::Channel) -> serenity::model::Gu
 
 }
 
-//(<@\d*>)
 fn impersonate(_context: &mut Context,
                message: &Message,
                _args: Vec<String>)
@@ -222,22 +194,19 @@ fn impersonate(_context: &mut Context,
         }
 
         if messages.len() > 0 {
+
             for m in messages {
                 chain.feed_str(&m);
             }
 
             let re_iter = Regex::new(r"\D").unwrap();
             let iter_test = re_iter.replace_all(_args.get(1).unwrap(), "");
-            let iter: usize = 1;
+            let mut iter: usize = 1;
 
             if !iter_test.is_empty() {
-                let iter = iter_test.parse::<usize>().unwrap();
-            }
-            else {
-                let iter = 1;
+                iter = iter_test.parse::<usize>().unwrap();
             }
             
-
             let mut msg = String::new();
 
             for line in chain.str_iter_for(iter) {
@@ -430,3 +399,31 @@ fn insert_into_db(pool: &r2d2::Pool<SqliteConnectionManager>,
                            &message_timestamp]);
 
 }
+
+command!(hivemind(_context, message) {
+    let re = Regex::new(r"(<@!?\d*>)").unwrap();
+
+        let mut chain: Chain<String> = Chain::new();
+
+        let mut data = _context.data.lock().unwrap();
+        let pool = data.get_mut::<Sqlpool>().unwrap();
+        let conn = pool.get().unwrap();
+
+        let mut stmt = conn.prepare("SELECT * FROM messages where content not like '%~hivemind%' and content not like '%~impersonate%' and content not like '%~ping%' " ).unwrap();
+        let rows = stmt.query_map_named(&[], |row| row.get(3))
+            .unwrap();
+
+        let mut messages = Vec::<String>::new();
+        for content in rows {
+            messages.push(content.unwrap());
+        }
+
+        if messages.len() > 0 {
+            for m in messages {
+                chain.feed_str(&m);
+            }
+            let _ = message.reply(&re.replace_all(&chain.generate_str(), "@mention").into_owned());
+        } else {
+            let _ = message.reply("They haven't said anything");
+        }
+});
