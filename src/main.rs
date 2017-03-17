@@ -151,7 +151,7 @@ command!(hivemind(_context, message) {
         let pool = data.get_mut::<Sqlpool>().unwrap();
         let conn = pool.get().unwrap();
 
-        let mut stmt = conn.prepare("SELECT * FROM messages where content not like '%~impersonate%' and content not like '%~ping%' " ).unwrap();
+        let mut stmt = conn.prepare("SELECT * FROM messages where content not like '%~hivemind%' and content not like '%~impersonate%' and content not like '%~ping%' " ).unwrap();
         let rows = stmt.query_map_named(&[], |row| row.get(3))
             .unwrap();
 
@@ -212,7 +212,7 @@ fn impersonate(_context: &mut Context,
         let pool = data.get_mut::<Sqlpool>().unwrap();
         let conn = pool.get().unwrap();
 
-        let mut stmt = conn.prepare("SELECT * FROM messages where author = :id and content not like '%~impersonate%' and content not like '%~ping%' " ).unwrap();
+        let mut stmt = conn.prepare("SELECT * FROM messages where author = :id and content not like '%~hivemind%' and content not like '%~impersonate%' and content not like '%~ping%' " ).unwrap();
         let rows = stmt.query_map_named(&[(":id", &(user.id.0.to_string()))], |row| row.get(3))
             .unwrap();
 
@@ -258,7 +258,7 @@ fn impersonate(_context: &mut Context,
         let pool = data.get_mut::<Sqlpool>().unwrap();
         let conn = pool.get().unwrap();
 
-        let mut stmt = conn.prepare("SELECT * FROM messages where author = :id and content not like '%~impersonate%' and content not like '%~ping%' " ).unwrap();
+        let mut stmt = conn.prepare("SELECT * FROM messages where author = :id and content not like '%~hivemind%' and content not like '%~impersonate%' and content not like '%~ping%' " ).unwrap();
         let rows = stmt.query_map_named(&[(":id", &(user.id.0.to_string()))], |row| row.get(3))
             .unwrap();
 
