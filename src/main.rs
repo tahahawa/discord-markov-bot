@@ -164,17 +164,11 @@ fn impersonate(_context: &mut Context,
 
     let re = Regex::new(r"(<@!?\d*>)").unwrap();
 
-    let members = get_guild_id_from_chan(chan).get_members(Some(1000), Some(0)).unwrap();
+    let guild_arc = get_guild_id_from_chan(chan).find().unwrap();
+    let guild = guild_arc.read().unwrap();
+    
 
-    let mut user = None;
-    for m in members {
-        if m.display_name().to_lowercase() == _args[0].to_lowercase() {
-            user = Some(m.user
-                            .read()
-                            .unwrap()
-                            .clone());
-        }
-    }
+    let user = Some(guild.get_member_named(&_args[0]).unwrap().user.read().unwrap());
 
         let mut data = _context.data.lock().unwrap();
         let pool = data.get_mut::<Sqlpool>().unwrap().clone();
