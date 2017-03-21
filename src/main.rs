@@ -167,8 +167,17 @@ fn impersonate(_context: &mut Context,
     let guild_arc = get_guild_id_from_chan(chan).find().unwrap();
     let guild = guild_arc.read().unwrap();
     
+    println!("arg: {}", _args[0]);
+    println!("guild member get named: {:?}", guild.get_member_named(&_args[0]) );
 
-    let user = Some(guild.get_member_named(&_args[0]).unwrap().user.read().unwrap());
+    
+    let user_rwlock = guild.get_member_named(&_args[0]);
+    
+    let mut user = None;
+    if  user_rwlock.is_some() {
+        user = Some(user_rwlock.unwrap().user.read().unwrap());
+    }
+    
 
         let mut data = _context.data.lock().unwrap();
         let pool = data.get_mut::<Sqlpool>().unwrap().clone();
