@@ -36,9 +36,9 @@ fn main() {
     let mut fstr = String::new();
     let _ = f.read_to_string(&mut fstr);
 
-    let config: BTreeMap<String, String> = serde_yaml::from_str(&mut fstr).unwrap();
+    let config: BTreeMap<String, String> = serde_yaml::from_str(&fstr).unwrap();
 
-    let dbname = config.get("db").unwrap().clone();
+    let dbname = config["db"].clone();
 
     let r2d2_config = r2d2::Config::default();
     let manager = SqliteConnectionManager::new(&dbname);
@@ -62,10 +62,10 @@ fn main() {
 
     println!("pre-init done");
 
-    let mut client = Client::login_bot(&config.get("token").expect("token"));
+    let mut client = Client::login_bot(&config["token"]);
     client.with_framework(|f| {
         f
-        .configure(|c| c.prefix("~")) // set the bot's prefix to "~"
+        .configure(|c| c.prefix("&")) // set the bot's prefix to "~"
         .on("ping", ping)
         .on("hivemind", hivemind)
         .command("impersonate", |c| c
@@ -94,7 +94,7 @@ fn main() {
                                let mut data = _ctx.data.lock().unwrap();
                                let sql_pool = data.get_mut::<Sqlpool>().unwrap().clone();
 
-                               download_all_messages(guild, &sql_pool);
+                               download_all_messages(&guild, &sql_pool);
                            });
 
     client.on_message(|_ctx, message| {
@@ -102,14 +102,14 @@ fn main() {
         let sql_pool = data.get_mut::<Sqlpool>().unwrap().clone();
 
         insert_into_db(&sql_pool,
-                       message.id.0.to_string(),
-                       message.channel_id.0.to_string(),
-                       message.author
-                           .id
-                           .0
-                           .to_string(),
-                       message.content,
-                       message.timestamp);
+                       &message.id.0.to_string(),
+                       &message.channel_id.0.to_string(),
+                       &message.author
+                            .id
+                            .0
+                            .to_string(),
+                       &message.content,
+                       &message.timestamp);
 
         //println!("added message on_message: {}", message.id.0.to_string());
     });
@@ -148,7 +148,7 @@ fn get_guild_id_from_chan(chan: serenity::model::Channel) -> serenity::model::Gu
 
     match chan {
         serenity::model::Channel::Guild(guild_channel) => guild_channel.read().unwrap().guild_id,
-        _ => return serenity::model::GuildId(0),
+        _ => serenity::model::GuildId(0),
     }
 
 }
@@ -164,24 +164,42 @@ fn impersonate(_context: &mut Context,
 
     let re = Regex::new(r"(<@!?\d*>)").unwrap();
 
-    let guild_arc = get_guild_id_from_chan(chan).find().unwrap();
-    let guild = guild_arc.read().unwrap();
-    
-    println!("arg: {}", _args[0]);
-    println!("guild member get named: {:?}", guild.get_member_named(&_args[0]) );
-
-    
-    let user_rwlock = guild.get_member_named(&_args[0]);
-    
+    let guild_id = get_guild_id_from_chan(chan);
     let mut user = None;
-    if  user_rwlock.is_some() {
-        user = Some(user_rwlock.unwrap().user.read().unwrap());
-    }
-    
+    let mut offset = 0;
+    let mut count = 0;
+    'outer: while user.is_none() {
+        let members = guild_id.get_members(Some(1000), Some(offset)).unwrap();
 
-        let mut data = _context.data.lock().unwrap();
-        let pool = data.get_mut::<Sqlpool>().unwrap().clone();
-        let conn = pool.get().unwrap();
+        if count == 10 || members.is_empty() {
+            break 'outer;
+        } else {
+            offset += members[0]
+                .user
+                .read()
+                .unwrap()
+                .clone()
+                .id
+                .0;
+        }
+
+        for m in members {
+            if m.display_name().to_lowercase() == _args[0].to_lowercase() ||
+               m.distinct().to_lowercase() == _args[0].to_lowercase() {
+                user = Some(m.user
+                                .read()
+                                .unwrap()
+                                .clone());
+                break 'outer;
+            }
+        }
+
+        count += 1;
+    }
+
+    let mut data = _context.data.lock().unwrap();
+    let pool = data.get_mut::<Sqlpool>().unwrap().clone();
+    let conn = pool.get().unwrap();
 
     if user.is_some() && _args.len() > 1 {
         let user = user.unwrap();
@@ -196,20 +214,21 @@ fn impersonate(_context: &mut Context,
             messages.push(content.unwrap());
         }
 
-        if messages.len() > 0 {
+        if !messages.is_empty() {
 
             for m in messages {
                 chain.feed_str(&m);
             }
 
             let re_iter = Regex::new(r"\D").unwrap();
-            let iter_test = re_iter.replace_all(_args.get(1).unwrap(), "");
-            let mut iter: usize = 1;
+            let iter_test = re_iter.replace_all(&_args[1], "");
 
-            if !iter_test.is_empty() {
-                iter = iter_test.parse::<usize>().unwrap();
-            }
-            
+            let iter: usize = if !iter_test.is_empty() {
+                iter_test.parse::<usize>().unwrap()
+            } else {
+                1
+            };
+
             let mut msg = String::new();
 
             for line in chain.str_iter_for(iter) {
@@ -235,7 +254,7 @@ fn impersonate(_context: &mut Context,
             messages.push(content.unwrap());
         }
 
-        if messages.len() > 0 {
+        if !messages.is_empty() {
             for m in messages {
                 chain.feed_str(&m);
             }
@@ -251,8 +270,8 @@ fn impersonate(_context: &mut Context,
 }
 
 
-fn download_all_messages(guild: serenity::model::Guild,
-                         ref pool: &r2d2::Pool<SqliteConnectionManager>) {
+fn download_all_messages(guild: &serenity::model::Guild,
+                         pool: &r2d2::Pool<SqliteConnectionManager>) {
     for chan in guild.get_channels().unwrap() {
 
         let mut _messages = Vec::new();
@@ -300,19 +319,19 @@ fn download_all_messages(guild: serenity::model::Guild,
             }
         }
 
-        while !_messages.is_empty() && _messages.len() > 0 {
+        while !_messages.is_empty() && !_messages.is_empty() {
             let message_vec = _messages.to_vec();
             for message in message_vec {
 
                 insert_into_db(pool,
-                               message.id.0.to_string(),
-                               message.channel_id.0.to_string(),
-                               message.author
-                                   .id
-                                   .0
-                                   .to_string(),
-                               message.content,
-                               message.timestamp);
+                               &message.id.0.to_string(),
+                               &message.channel_id.0.to_string(),
+                               &message.author
+                                    .id
+                                    .0
+                                    .to_string(),
+                               &message.content,
+                               &message.timestamp);
 
                 //println!("{:?}", message);
             }
@@ -379,21 +398,21 @@ fn get_latest_id_for_channel(channel_id: u64, pool: &r2d2::Pool<SqliteConnection
 }
 
 fn insert_into_db(pool: &r2d2::Pool<SqliteConnectionManager>,
-                  message_id: String,
-                  channel_id: String,
-                  message_author: String,
-                  message_content: String,
-                  message_timestamp: String) {
+                  message_id: &String,
+                  channel_id: &String,
+                  message_author: &String,
+                  message_content: &String,
+                  message_timestamp: &String) {
 
     let conn = pool.get().unwrap();
 
     let _ = conn.execute("INSERT or REPLACE INTO messages (id, channel_id, author, content, timestamp) \
                                           VALUES (?1, ?2, ?3, ?4, ?5)",
-                         &[&message_id,
-                           &(channel_id),
-                           &(message_author),
-                           &message_content,
-                           &message_timestamp]);
+                         &[message_id,
+                           (channel_id),
+                           (message_author),
+                           message_content,
+                           message_timestamp]);
 
 }
 
