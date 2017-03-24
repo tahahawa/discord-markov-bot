@@ -65,7 +65,7 @@ fn main() {
     let mut client = Client::login_bot(&config["token"]);
     client.with_framework(|f| {
         f
-        .configure(|c| c.prefix("&")) // set the bot's prefix to "~"
+        .configure(|c| c.prefix("~")) // set the bot's prefix to "~"
         .on("ping", ping)
         .on("hivemind", hivemind)
         .command("impersonate", |c| c
