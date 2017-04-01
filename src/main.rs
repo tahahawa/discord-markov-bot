@@ -174,7 +174,7 @@ fn impersonate(_context: &mut Context,
         if count == 10 || members.is_empty() {
             break 'outer;
         } else {
-            offset += members[0]
+            offset = members[0]
                 .user
                 .read()
                 .unwrap()
