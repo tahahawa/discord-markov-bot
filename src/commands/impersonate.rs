@@ -2,19 +2,10 @@ use serenity::client::*;
 use serenity::model::*;
 use regex::Regex;
 use markov::Chain;
-use r2d2;
-use r2d2_sqlite::SqliteConnectionManager;
-use typemap::Key;
 
 use commands;
 
-pub type SqlitePool = r2d2::Pool<SqliteConnectionManager>;
-
-pub struct Sqlpool;
-
-impl Key for Sqlpool {
-    type Value = SqlitePool;
-}
+use Sqlpool;
 
 pub fn impersonate(_context: &mut Context,
                message: &Message,
