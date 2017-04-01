@@ -44,7 +44,7 @@ pub fn hivemind(_context: &mut Context,
             }
 
             let re_iter = Regex::new(r"\D").unwrap();
-            let iter_test = re_iter.replace_all(&_args[1], "");
+            let iter_test = re_iter.replace_all(&_args[0], "");
 
             let iter: usize = if !iter_test.is_empty() {
                 iter_test.parse::<usize>().unwrap()
