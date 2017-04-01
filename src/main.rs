@@ -16,8 +16,6 @@ use typemap::Key;
 
 use r2d2_sqlite::SqliteConnectionManager;
 
-use regex::Regex;
-
 use serenity::client::Client;
 
 pub type SqlitePool = r2d2::Pool<SqliteConnectionManager>;

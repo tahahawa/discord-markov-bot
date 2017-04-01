@@ -1,6 +1,6 @@
 use serenity::client::*;
 use serenity::model::*;
-use Regex;
+use regex::Regex;
 use markov::Chain;
 use r2d2;
 use r2d2_sqlite::SqliteConnectionManager;
