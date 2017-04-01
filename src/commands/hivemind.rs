@@ -25,7 +25,7 @@ pub fn hivemind(_context: &mut Context,
     let pool = data.get_mut::<Sqlpool>().unwrap().clone();
     let conn = pool.get().unwrap();
 
-    if _args.len() > 1 {
+    if _args.len() > 0 {
         let mut chain: Chain<String> = Chain::new();
 
         let mut stmt = conn.prepare("SELECT * FROM messages where content not like '%~hivemind%' and content not like '%~impersonate%' and content not like '%~ping%' " ).unwrap();
@@ -44,7 +44,7 @@ pub fn hivemind(_context: &mut Context,
             }
 
             let re_iter = Regex::new(r"\D").unwrap();
-            let iter_test = re_iter.replace_all(&_args[1], "");
+            let iter_test = re_iter.replace_all(&_args[0], "");
 
             let iter: usize = if !iter_test.is_empty() {
                 iter_test.parse::<usize>().unwrap()

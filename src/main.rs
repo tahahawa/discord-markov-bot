@@ -64,8 +64,8 @@ fn main() {
         .configure(|c| c.prefix("~")) // set the bot's prefix to "~"
         .on("ping", commands::meta::ping)
         .command("hivemind", |c| c
-        .use_quotes(true)
-        .min_args(1)
+        .use_quotes(false)
+        .min_args(0)
         .guild_only(true)
         .exec(commands::hivemind::hivemind))
         .command("impersonate", |c| c
