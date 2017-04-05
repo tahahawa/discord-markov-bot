@@ -83,14 +83,12 @@ pub fn impersonate(_context: &mut Context,
                 1
             };
 
-            let mut msg = String::new();
-
             for line in chain.str_iter_for(iter) {
-                msg = msg + "\n" + &line;
+                
+                let _ = message.channel_id.say(&re.replace_all(&line, "@mention").into_owned());
                 //println!("{}", line);
             }
 
-            let _ = message.reply(&re.replace_all(&msg, "@mention").into_owned());
         } else {
             let _ = message.reply("They haven't said anything");
         }
@@ -112,7 +110,7 @@ pub fn impersonate(_context: &mut Context,
             for m in messages {
                 chain.feed_str(&m);
             }
-            let _ = message.reply(&re.replace_all(&chain.generate_str(), "@mention").into_owned());
+            let _ = message.channel_id.say(&re.replace_all(&chain.generate_str(), "@mention").into_owned());
         } else {
             let _ = message.reply("They haven't said anything");
         }
