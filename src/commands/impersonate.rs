@@ -78,7 +78,12 @@ pub fn impersonate(_context: &mut Context,
             let iter_test = re_iter.replace_all(&_args[1], "");
 
             let iter: usize = if !iter_test.is_empty() {
-                iter_test.parse::<usize>().unwrap()
+                if iter_test.parse::<usize>().is_ok() {
+                    iter_test.parse::<usize>().unwrap()
+                }
+                else {
+                    1
+                }
             } else {
                 1
             };
