@@ -67,12 +67,14 @@ fn main() {
         .use_quotes(false)
         .min_args(0)
         .guild_only(true)
+        .bucket("hivemind")
         .exec(commands::hivemind::hivemind))
         .command("impersonate", |c| c
         .use_quotes(true)
         .min_args(1)
         .guild_only(true)
         .exec(commands::impersonate::impersonate))
+        .simple_bucket("hivemind", 300)
     });
 
     {
