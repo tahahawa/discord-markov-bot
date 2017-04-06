@@ -59,7 +59,7 @@ pub fn hivemind(_context: &mut Context,
     } else {
         let mut chain: Chain<String> = Chain::new();
 
-        let mut stmt = conn.prepare("SELECT * FROM messages where and content not like '%~hivemind%' and content not like '%~impersonate%' and content not like '%~ping%' " ).unwrap();
+        let mut stmt = conn.prepare("SELECT * FROM messages where content not like '%~hivemind%' and content not like '%~impersonate%' and content not like '%~ping%' " ).unwrap();
         let rows = stmt.query_map_named(&[], |row| row.get(3))
             .unwrap();
 
