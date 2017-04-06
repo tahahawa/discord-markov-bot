@@ -61,7 +61,7 @@ fn main() {
     let mut client = Client::login_bot(&config["token"]);
     client.with_framework(|f| {
         f
-        .configure(|c| c.prefix("~")) // set the bot's prefix to "~"
+        .configure(|c| c.prefix("~").rate_limit_message("try again in %time% seconds")) // set the bot's prefix to "~"
         .on("ping", commands::meta::ping)
         .command("hivemind", |c| c
         .use_quotes(false)
