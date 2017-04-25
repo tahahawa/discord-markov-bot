@@ -14,7 +14,7 @@ pub fn get_guild_id_from_chan(chan: serenity::model::Channel) -> serenity::model
 
 pub fn download_all_messages(guild: &serenity::model::Guild,
                          pool: &r2d2::Pool<SqliteConnectionManager>) {
-    for chan in guild.get_channels().unwrap() {
+    for chan in guild.channels().unwrap() {
 
         let mut _messages = Vec::new();
         let channel_id = (chan.0).0;
@@ -46,14 +46,14 @@ pub fn download_all_messages(guild: &serenity::model::Guild,
 
         if id == 0 {
             //println!("no message ID");
-            let try = chan.0.get_messages(|g| g.after(0).limit(100));
+            let try = chan.0.messages(|g| g.after(0).limit(100));
             match try {
                 Err(_) => println!("error getting messages"),
                 _ => _messages = try.unwrap(),
             }
         } else {
             let try =
-                chan.0.get_messages(|g| g.after(serenity::model::MessageId(id as u64)).limit(100));
+                chan.0.messages(|g| g.after(serenity::model::MessageId(id as u64)).limit(100));
 
             match try {
                 Err(_) => println!("error getting messages"),
@@ -82,7 +82,7 @@ pub fn download_all_messages(guild: &serenity::model::Guild,
 
             if id2 == 0 {
                 //println!("no message ID");
-                let try = chan.0.get_messages(|g| g.after(0).limit(100));
+                let try = chan.0.messages(|g| g.after(0).limit(100));
                 match try {
                     Err(_) => println!("error getting messages"),
                     _ => _messages = try.unwrap(),
@@ -90,7 +90,7 @@ pub fn download_all_messages(guild: &serenity::model::Guild,
             } else if id2 >= biggest_id {
                 break;
             } else {
-                let try = chan.0.get_messages(|g| {
+                let try = chan.0.messages(|g| {
                                                   g.after(serenity::model::MessageId(id2 as u64))
                                                       .limit(100)
                                               });
