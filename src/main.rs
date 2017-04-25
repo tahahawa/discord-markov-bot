@@ -17,6 +17,8 @@ use typemap::Key;
 use r2d2_sqlite::SqliteConnectionManager;
 
 use serenity::client::Client;
+use serenity::ext::framework::{DispatchError, help_commands};
+
 
 pub type SqlitePool = r2d2::Pool<SqliteConnectionManager>;
 
@@ -58,10 +60,25 @@ fn main() {
 
     println!("pre-init done");
 
-    let mut client = Client::login_bot(&config["token"]);
+    let mut client = Client::login(&config["token"]);
     client.with_framework(|f| {
         f
-        .configure(|c| c.prefix("~").rate_limit_message("try again in %time% seconds")) // set the bot's prefix to "~"
+        .configure(|c| c.prefix("~")) // set the bot's prefix to "~"
+        .on_dispatch_error(|_ctx, msg, error| {
+            match error {
+                DispatchError::RateLimited(seconds) => {
+                    let _ = msg.channel_id.say(&format!("Try this again in {} seconds.", seconds));
+                },
+                // Any other error would be silently ignored.
+                _ => {},
+            }
+        })
+        .before(|_, msg, command_name| {
+            println!("Got command '{}' by user '{}'",
+                     command_name,
+                     msg.author.name);
+        true
+        })
         .on("ping", commands::meta::ping)
         .command("hivemind", |c| c
         .use_quotes(false)
@@ -75,6 +92,7 @@ fn main() {
         .guild_only(true)
         .exec(commands::impersonate::impersonate))
         .simple_bucket("hivemind", 300)
+        .command("help", |c| c.exec_help(help_commands::plain))
     });
 
     {

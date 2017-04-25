@@ -23,7 +23,7 @@ pub fn impersonate(_context: &mut Context,
     let mut offset = 0;
     let mut count = 0;
     'outer: while user.is_none() {
-        let members = guild_id.get_members(Some(1000), Some(offset)).unwrap();
+        let members = guild_id.members(Some(1000), Some(offset)).unwrap();
 
         if count == 10 || members.is_empty() {
             break 'outer;
