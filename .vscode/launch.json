@@ -4,15 +4,15 @@
     {
       "type": "gdb",
       "request": "launch",
-      "name": "Launch Program",
+      "name": "GDB",
       "target": "${workspaceRoot}/target/debug/discord-markov-bot",
       "cwd": "${workspaceRoot}"
     },
     {
-      "name": "Debug",
-      "type": "gdb",
+      "name": "LLDB",
+      "type": "lldb",
       "request": "launch",
-      "target": "${workspaceRoot}/target/debug/discord-markov-bot",
+      "program": "${workspaceRoot}/target/debug/discord-markov-bot",
       "cwd": "${workspaceRoot}"
     }
   ]
