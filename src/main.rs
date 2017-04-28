@@ -65,12 +65,9 @@ fn main() {
         f
         .configure(|c| c.prefix("~")) // set the bot's prefix to "~"
         .on_dispatch_error(|_ctx, msg, error| {
-            match error {
-                DispatchError::RateLimited(seconds) => {
-                    let _ = msg.channel_id.say(&format!("Try this again in {} seconds.", seconds));
-                },
-                _ => {},
-            }
+            if let DispatchError::RateLimited(seconds) = error {
+        let _ = msg.channel_id.say(&format!("Try this again in {} seconds.", seconds));
+        }
         })
         .before(|_, msg, command_name| {
             println!("Got command '{}' by user '{}'",

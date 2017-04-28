@@ -15,7 +15,7 @@ pub fn hivemind(_context: &mut Context,
     let pool = data.get_mut::<Sqlpool>().unwrap().clone();
     let conn = pool.get().unwrap();
 
-    if _args.len() > 0 {
+    if !_args.is_empty() {
         let mut chain: Chain<String> = Chain::new();
 
         let mut stmt = conn.prepare("SELECT * FROM messages where content not like '%~hivemind%' and content not like '%~impersonate%' and content not like '%~ping%' " ).unwrap();
