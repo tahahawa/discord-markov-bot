@@ -69,7 +69,6 @@ fn main() {
                 DispatchError::RateLimited(seconds) => {
                     let _ = msg.channel_id.say(&format!("Try this again in {} seconds.", seconds));
                 },
-                // Any other error would be silently ignored.
                 _ => {},
             }
         })
@@ -102,13 +101,13 @@ fn main() {
 
 
     client.on_ready(|_ctx, ready| {
-        println!("{} is connected!", ready.user.name);
-        println!("{:?}", ready.guilds);
-        //let mut data = _ctx.data.lock().unwrap();
-        //let sql_pool = data.get_mut::<Sqlpool>().unwrap().clone();
+                        println!("{} is connected!", ready.user.name);
+                        println!("{:?}", ready.guilds);
+                        //let mut data = _ctx.data.lock().unwrap();
+                        //let sql_pool = data.get_mut::<Sqlpool>().unwrap().clone();
 
-        //download_all_messages(ready, sql_pool );
-    });
+                        //download_all_messages(ready, sql_pool );
+                    });
 
     client.on_guild_create(|_ctx, guild| {
                                let mut data = _ctx.data.lock().unwrap();
@@ -122,14 +121,11 @@ fn main() {
         let sql_pool = data.get_mut::<Sqlpool>().unwrap().clone();
 
         commands::helper::insert_into_db(&sql_pool,
-                       &message.id.0.to_string(),
-                       &message.channel_id.0.to_string(),
-                       &message.author
-                            .id
-                            .0
-                            .to_string(),
-                       &message.content,
-                       &message.timestamp);
+                                         &message.id.0.to_string(),
+                                         &message.channel_id.0.to_string(),
+                                         &message.author.id.0.to_string(),
+                                         &message.content,
+                                         &message.timestamp);
 
         //println!("added message on_message: {}", message.id.0.to_string());
     });
