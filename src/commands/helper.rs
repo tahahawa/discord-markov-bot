@@ -62,6 +62,8 @@ pub fn download_all_messages(guild: &serenity::model::Guild,
         }
 
         while !_messages.is_empty() && !_messages.is_empty() {
+            let _ = chan.0.broadcast_typing();
+            println!("storing messages");
             let message_vec = _messages.to_vec();
             for message in message_vec {
 

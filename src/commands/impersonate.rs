@@ -13,6 +13,8 @@ pub fn impersonate(_context: &mut Context,
                -> Result<(), String> {
     let chan = message.channel_id.get().unwrap();
 
+    let _ = message.channel_id.broadcast_typing();
+
     let re = Regex::new(r"(<@!?\d*>)").unwrap();
 
     let guild_id = commands::helper::get_guild_id_from_chan(chan);
