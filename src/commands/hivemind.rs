@@ -9,6 +9,8 @@ pub fn hivemind(_context: &mut Context,
                _args: Vec<String>)
                -> Result<(), String> {
 
+    let _ = message.channel_id.broadcast_typing();
+
     let re = Regex::new(r"(<@!?\d*>)").unwrap();
 
     let mut data = _context.data.lock().unwrap();
