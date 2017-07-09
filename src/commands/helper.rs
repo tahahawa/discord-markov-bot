@@ -73,7 +73,7 @@ pub fn download_all_messages(guild: &serenity::model::Guild,
                                     .0
                                     .to_string(),
                                &message.content,
-                               &message.timestamp);
+                               &message.timestamp.to_string());
 
                 //println!("{:?}", message);
             }
