@@ -7,10 +7,11 @@ use commands;
 
 use Sqlpool;
 
-pub fn impersonate(_context: &mut Context,
-               message: &Message,
-               _args: Vec<String>)
-               -> Result<(), String> {
+pub fn impersonate(
+    _context: &mut Context,
+    message: &Message,
+    _args: Vec<String>,
+) -> Result<(), String> {
     let chan = message.channel_id.get().unwrap();
 
     let _ = message.channel_id.broadcast_typing();
@@ -27,22 +28,14 @@ pub fn impersonate(_context: &mut Context,
         if count == 10 || members.is_empty() {
             break 'outer;
         } else {
-            offset = members[members.len()-1]
-                .user
-                .read()
-                .unwrap()
-                .clone()
-                .id
-                .0;
+            offset = members[members.len() - 1].user.read().unwrap().clone().id.0;
         }
 
         for m in members {
             if m.display_name().to_lowercase() == _args[0].to_lowercase() ||
-               m.distinct().to_lowercase() == _args[0].to_lowercase() {
-                user = Some(m.user
-                                .read()
-                                .unwrap()
-                                .clone());
+                m.distinct().to_lowercase() == _args[0].to_lowercase()
+            {
+                user = Some(m.user.read().unwrap().clone());
                 break 'outer;
             }
         }
@@ -81,8 +74,9 @@ pub fn impersonate(_context: &mut Context,
             let iter: usize = iter_test.parse::<usize>().unwrap_or(1);
 
             for line in chain.str_iter_for(iter) {
-                
-                let _ = message.channel_id.say(&re.replace_all(&line, "@mention").into_owned());
+
+                let _ = message.channel_id.say(&re.replace_all(&line, "@mention")
+                    .into_owned());
                 //println!("{}", line);
             }
 
@@ -107,7 +101,10 @@ pub fn impersonate(_context: &mut Context,
             for m in messages {
                 chain.feed_str(&m);
             }
-            let _ = message.channel_id.say(&re.replace_all(&chain.generate_str(), "@mention").into_owned());
+            let _ = message.channel_id.say(&re.replace_all(
+                &chain.generate_str(),
+                "@mention",
+            ).into_owned());
         } else {
             let _ = message.reply("They haven't said anything");
         }

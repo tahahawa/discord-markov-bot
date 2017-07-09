@@ -34,31 +34,33 @@ struct Handler;
 
 impl EventHandler for Handler {
     fn on_ready(&self, _ctx: Context, ready: Ready) {
-                        println!("{} is connected!", ready.user.name);
-                        println!("{:?}", ready.guilds);
-                        //let mut data = _ctx.data.lock().unwrap();
-                        //let sql_pool = data.get_mut::<Sqlpool>().unwrap().clone();
+        println!("{} is connected!", ready.user.name);
+        println!("{:?}", ready.guilds);
+        //let mut data = _ctx.data.lock().unwrap();
+        //let sql_pool = data.get_mut::<Sqlpool>().unwrap().clone();
 
-                        //download_all_messages(ready, sql_pool );
-                    }
+        //download_all_messages(ready, sql_pool );
+    }
 
     fn on_guild_create(&self, _ctx: Context, guild: Guild, _: bool) {
-                               let mut data = _ctx.data.lock().unwrap();
-                               let sql_pool = data.get_mut::<Sqlpool>().unwrap().clone();
+        let mut data = _ctx.data.lock().unwrap();
+        let sql_pool = data.get_mut::<Sqlpool>().unwrap().clone();
 
-                               commands::helper::download_all_messages(&guild, &sql_pool);
-                           }
+        commands::helper::download_all_messages(&guild, &sql_pool);
+    }
 
     fn on_message(&self, _ctx: Context, message: Message) {
         let mut data = _ctx.data.lock().unwrap();
         let sql_pool = data.get_mut::<Sqlpool>().unwrap().clone();
 
-        commands::helper::insert_into_db(&sql_pool,
-                                         &message.id.0.to_string(),
-                                         &message.channel_id.0.to_string(),
-                                         &message.author.id.0.to_string(),
-                                         &message.content,
-                                         &message.timestamp.to_string());
+        commands::helper::insert_into_db(
+            &sql_pool,
+            &message.id.0.to_string(),
+            &message.channel_id.0.to_string(),
+            &message.author.id.0.to_string(),
+            &message.content,
+            &message.timestamp.to_string(),
+        );
 
         //println!("added message on_message: {}", message.id.0.to_string());
     }
@@ -80,7 +82,6 @@ impl EventHandler for Handler {
 
         //println!("added message on_message_update: {}", message.id.0.to_string());
     });*/
-
 }
 
 fn main() {
@@ -98,19 +99,21 @@ fn main() {
     let pool = r2d2::Pool::new(r2d2_config, manager).unwrap();
     let conn = pool.get().unwrap();
 
-    conn.execute("CREATE TABLE IF NOT EXISTS messages (
+    conn.execute(
+        "CREATE TABLE IF NOT EXISTS messages (
                   id                        TEXT PRIMARY KEY,
                   channel_id        TEXT NOT NULL,
                   author              TEXT NOT NULL,
                   content             TEXT NOT NULL,
                   timestamp       TEXT NOT NULL)",
-                 &[])
-        .unwrap();
+        &[],
+    ).unwrap();
 
-    conn.execute("INSERT or REPLACE INTO messages (id, channel_id, author, content, timestamp) \
+    conn.execute(
+        "INSERT or REPLACE INTO messages (id, channel_id, author, content, timestamp) \
                                           VALUES (0, 0, 0, 0, 0)",
-                 &[])
-        .unwrap();
+        &[],
+    ).unwrap();
 
     println!("pre-init done");
 
@@ -157,4 +160,3 @@ fn main() {
     }
 
 }
-

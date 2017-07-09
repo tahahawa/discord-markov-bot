@@ -4,10 +4,11 @@ use regex::Regex;
 use markov::Chain;
 use Sqlpool;
 
-pub fn hivemind(_context: &mut Context,
-               message: &Message,
-               _args: Vec<String>)
-               -> Result<(), String> {
+pub fn hivemind(
+    _context: &mut Context,
+    message: &Message,
+    _args: Vec<String>,
+) -> Result<(), String> {
 
     let _ = message.channel_id.broadcast_typing();
 
@@ -21,8 +22,7 @@ pub fn hivemind(_context: &mut Context,
         let mut chain: Chain<String> = Chain::new();
 
         let mut stmt = conn.prepare("SELECT * FROM messages where content not like '%~hivemind%' and content not like '%~impersonate%' and content not like '%~ping%' " ).unwrap();
-        let rows = stmt.query_map_named(&[], |row| row.get(3))
-            .unwrap();
+        let rows = stmt.query_map_named(&[], |row| row.get(3)).unwrap();
 
         let mut messages = Vec::<String>::new();
         for content in rows {
@@ -41,8 +41,7 @@ pub fn hivemind(_context: &mut Context,
             let iter: usize = if !iter_test.is_empty() {
                 if iter_test.parse::<usize>().is_ok() {
                     iter_test.parse::<usize>().unwrap()
-                }
-                else {
+                } else {
                     1
                 }
             } else {
@@ -50,7 +49,8 @@ pub fn hivemind(_context: &mut Context,
             };
 
             for line in chain.str_iter_for(iter) {
-                let _ = message.channel_id.say(&re.replace_all(&line, "@mention").into_owned());
+                let _ = message.channel_id.say(&re.replace_all(&line, "@mention")
+                    .into_owned());
                 //println!("{}", line);
             }
 
@@ -62,8 +62,7 @@ pub fn hivemind(_context: &mut Context,
         let mut chain: Chain<String> = Chain::new();
 
         let mut stmt = conn.prepare("SELECT * FROM messages where content not like '%~hivemind%' and content not like '%~impersonate%' and content not like '%~ping%' " ).unwrap();
-        let rows = stmt.query_map_named(&[], |row| row.get(3))
-            .unwrap();
+        let rows = stmt.query_map_named(&[], |row| row.get(3)).unwrap();
 
         let mut messages = Vec::<String>::new();
         for content in rows {
@@ -74,7 +73,10 @@ pub fn hivemind(_context: &mut Context,
             for m in messages {
                 chain.feed_str(&m);
             }
-            let _ = message.channel_id.say(&re.replace_all(&chain.generate_str(), "@mention").into_owned());
+            let _ = message.channel_id.say(&re.replace_all(
+                &chain.generate_str(),
+                "@mention",
+            ).into_owned());
         } else {
             let _ = message.reply("They haven't said anything");
         }
