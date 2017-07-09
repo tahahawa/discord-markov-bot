@@ -11,10 +11,7 @@ pub fn impersonate(_context: &mut Context,
                message: &Message,
                _args: Vec<String>)
                -> Result<(), String> {
-    let chan = _context.channel_id
-        .unwrap()
-        .get()
-        .unwrap();
+    let chan = message.channel_id.get().unwrap();
 
     let re = Regex::new(r"(<@!?\d*>)").unwrap();
 
@@ -77,16 +74,9 @@ pub fn impersonate(_context: &mut Context,
             let re_iter = Regex::new(r"\D").unwrap();
             let iter_test = re_iter.replace_all(&_args[1], "");
 
-            let iter: usize = if !iter_test.is_empty() {
-                if iter_test.parse::<usize>().is_ok() {
-                    iter_test.parse::<usize>().unwrap()
-                }
-                else {
-                    1
-                }
-            } else {
-                1
-            };
+
+
+            let iter: usize = iter_test.parse::<usize>().unwrap_or(1);
 
             for line in chain.str_iter_for(iter) {
                 

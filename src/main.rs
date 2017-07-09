@@ -18,6 +18,8 @@ use r2d2_sqlite::SqliteConnectionManager;
 
 use serenity::client::Client;
 use serenity::ext::framework::{DispatchError, help_commands};
+use serenity::prelude::*;
+use serenity::model::*;
 
 
 pub type SqlitePool = r2d2::Pool<SqliteConnectionManager>;
@@ -28,6 +30,58 @@ impl Key for Sqlpool {
     type Value = SqlitePool;
 }
 
+struct Handler;
+
+impl EventHandler for Handler {
+    fn on_ready(&self, _ctx: Context, ready: Ready) {
+                        println!("{} is connected!", ready.user.name);
+                        println!("{:?}", ready.guilds);
+                        //let mut data = _ctx.data.lock().unwrap();
+                        //let sql_pool = data.get_mut::<Sqlpool>().unwrap().clone();
+
+                        //download_all_messages(ready, sql_pool );
+                    }
+
+    fn on_guild_create(&self, _ctx: Context, guild: Guild, _: bool) {
+                               let mut data = _ctx.data.lock().unwrap();
+                               let sql_pool = data.get_mut::<Sqlpool>().unwrap().clone();
+
+                               commands::helper::download_all_messages(&guild, &sql_pool);
+                           }
+
+    fn on_message(&self, _ctx: Context, message: Message) {
+        let mut data = _ctx.data.lock().unwrap();
+        let sql_pool = data.get_mut::<Sqlpool>().unwrap().clone();
+
+        commands::helper::insert_into_db(&sql_pool,
+                                         &message.id.0.to_string(),
+                                         &message.channel_id.0.to_string(),
+                                         &message.author.id.0.to_string(),
+                                         &message.content,
+                                         &message.timestamp.to_string());
+
+        //println!("added message on_message: {}", message.id.0.to_string());
+    }
+
+    /*client.on_message_update(|_ctx, message| {
+        let mut data = _ctx.data.lock().unwrap();
+        let sql_pool = data.get_mut::<Sqlpool>().unwrap();
+
+        insert_into_db(sql_pool,
+                       message.id.0.to_string(),
+                       message.channel_id.0.to_string(),
+                       message.author
+                           .unwrap()
+                           .id
+                           .0
+                           .to_string(),
+                       message.content.unwrap(),
+                       message.timestamp.unwrap());
+
+        //println!("added message on_message_update: {}", message.id.0.to_string());
+    });*/
+
+}
 
 fn main() {
     let mut f = File::open("config.yaml").unwrap();
@@ -60,17 +114,14 @@ fn main() {
 
     println!("pre-init done");
 
-    let mut client = Client::login(&config["token"]);
+    let mut client = Client::new(&config["token"], Handler);
     client.with_framework(|f| {
         f
         .configure(|c| c.prefix("~")) // set the bot's prefix to "~"
         .on_dispatch_error(|_ctx, msg, error| {
-            match error {
-                DispatchError::RateLimited(seconds) => {
-                    let _ = msg.channel_id.say(&format!("Try this again in {} seconds.", seconds));
-                },
-                _ => {},
-            }
+            if let DispatchError::RateLimited(seconds) = error {
+        let _ = msg.channel_id.say(&format!("Try this again in {} seconds.", seconds));
+        }
         })
         .before(|_, msg, command_name| {
             println!("Got command '{}' by user '{}'",
@@ -100,58 +151,10 @@ fn main() {
     }
 
 
-    client.on_ready(|_ctx, ready| {
-                        println!("{} is connected!", ready.user.name);
-                        println!("{:?}", ready.guilds);
-                        //let mut data = _ctx.data.lock().unwrap();
-                        //let sql_pool = data.get_mut::<Sqlpool>().unwrap().clone();
-
-                        //download_all_messages(ready, sql_pool );
-                    });
-
-    client.on_guild_create(|_ctx, guild| {
-                               let mut data = _ctx.data.lock().unwrap();
-                               let sql_pool = data.get_mut::<Sqlpool>().unwrap().clone();
-
-                               commands::helper::download_all_messages(&guild, &sql_pool);
-                           });
-
-    client.on_message(|_ctx, message| {
-        let mut data = _ctx.data.lock().unwrap();
-        let sql_pool = data.get_mut::<Sqlpool>().unwrap().clone();
-
-        commands::helper::insert_into_db(&sql_pool,
-                                         &message.id.0.to_string(),
-                                         &message.channel_id.0.to_string(),
-                                         &message.author.id.0.to_string(),
-                                         &message.content,
-                                         &message.timestamp);
-
-        //println!("added message on_message: {}", message.id.0.to_string());
-    });
-
-    /*client.on_message_update(|_ctx, message| {
-        let mut data = _ctx.data.lock().unwrap();
-        let sql_pool = data.get_mut::<Sqlpool>().unwrap();
-
-        insert_into_db(sql_pool,
-                       message.id.0.to_string(),
-                       message.channel_id.0.to_string(),
-                       message.author
-                           .unwrap()
-                           .id
-                           .0
-                           .to_string(),
-                       message.content.unwrap(),
-                       message.timestamp.unwrap());
-
-        //println!("added message on_message_update: {}", message.id.0.to_string());
-    });*/
-
-
     // start listening for events by starting a single shard
     if let Err(why) = client.start_autosharded() {
         println!("Client error: {:?}", why);
     }
 
 }
+
