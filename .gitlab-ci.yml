@@ -9,7 +9,7 @@ variables:
 build:
   image: "tomastomecek/rust"
   before_script:
-    - dnf install -y pkg-config libsodium libsqlite3
+    - dnf install -y pkgconfig libsodium sqlite-libs
     - cargo --version
     - rustc --version
   stage: build
