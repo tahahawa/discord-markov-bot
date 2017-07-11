@@ -64,8 +64,6 @@ pub fn impersonate(
         if !messages.is_empty() {
 
             for m in messages {
-                let _ = message.channel_id.broadcast_typing();
-
                 chain.feed_str(&m);
             }
 
@@ -94,17 +92,17 @@ pub fn impersonate(
         let mut chain: Chain<String> = Chain::new();
 
         let mut stmt = conn.prepare("SELECT * FROM messages where author = :id and content not like '%~hivemind%' and content not like '%~impersonate%' and content not like '%~ping%' " ).unwrap();
-        let rows = stmt.query_map_named(&[(":id", &(user.id.0.to_string()))], |row| row.get(3)).unwrap();
+        let rows = stmt.query_map_named(&[(":id", &(user.id.0.to_string()))], |row| row.get(3))
+            .unwrap();
 
         let mut messages = Vec::<String>::new();
         for content in rows {
             messages.push(content.unwrap());
         }
+        let _ = message.channel_id.broadcast_typing();
 
         if !messages.is_empty() {
             for m in messages {
-                let _ = message.channel_id.broadcast_typing();
-
                 chain.feed_str(&m);
             }
             let _ = message.channel_id.say(&re.replace_all(
