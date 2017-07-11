@@ -17,6 +17,7 @@ pub fn hivemind(
     let mut data = _context.data.lock().unwrap();
     let pool = data.get_mut::<Sqlpool>().unwrap().clone();
     let conn = pool.get().unwrap();
+    drop(data);
 
     if !_args.is_empty() {
         let mut chain: Chain<String> = Chain::new();
@@ -32,6 +33,8 @@ pub fn hivemind(
         if !messages.is_empty() {
 
             for m in messages {
+                let _ = message.channel_id.broadcast_typing();
+
                 chain.feed_str(&m);
             }
 
@@ -52,6 +55,8 @@ pub fn hivemind(
                 let _ = message.channel_id.say(&re.replace_all(&line, "@mention")
                     .into_owned());
                 //println!("{}", line);
+                let _ = message.channel_id.broadcast_typing();
+
             }
 
         } else {
@@ -71,6 +76,8 @@ pub fn hivemind(
 
         if !messages.is_empty() {
             for m in messages {
+                let _ = message.channel_id.broadcast_typing();
+
                 chain.feed_str(&m);
             }
             let _ = message.channel_id.say(&re.replace_all(
