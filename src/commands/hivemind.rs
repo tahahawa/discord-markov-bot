@@ -14,8 +14,8 @@ pub fn hivemind(
 
     let re = Regex::new(r"(<@!?\d*>)").unwrap();
 
-    let mut data = _context.data.lock().unwrap();
-    let pool = data.get_mut::<Sqlpool>().unwrap().clone();
+    let data = _context.data.lock().unwrap();
+    let pool = data.get::<Sqlpool>().unwrap().clone();
     let conn = pool.get().unwrap();
     drop(data);
 
