@@ -66,7 +66,12 @@ pub fn download_all_messages(
 
         while !_messages.is_empty() {
             let _ = chan.0.broadcast_typing();
-            println!("storing {} messages from #{} on {}", _messages.len(), chan.1.name, guild.name );
+            println!(
+                "storing {} messages from #{} on {}",
+                _messages.len(),
+                chan.1.name,
+                guild.name
+            );
             let message_vec = _messages.to_vec();
             for message in message_vec {
 
