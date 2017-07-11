@@ -64,7 +64,8 @@ pub fn impersonate(
         if !messages.is_empty() {
 
             for m in messages {
-                // let _ = message.channel_id.broadcast_typing();
+                let _ = message.channel_id.broadcast_typing();
+
                 chain.feed_str(&m);
             }
 
