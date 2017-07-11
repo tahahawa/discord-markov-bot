@@ -46,6 +46,7 @@ pub fn impersonate(
     let mut data = _context.data.lock().unwrap();
     let pool = data.get_mut::<Sqlpool>().unwrap().clone();
     let conn = pool.get().unwrap();
+    drop(data);
 
     if user.is_some() && _args.len() > 1 {
         let user = user.unwrap();
@@ -63,6 +64,8 @@ pub fn impersonate(
         if !messages.is_empty() {
 
             for m in messages {
+                let _ = message.channel_id.broadcast_typing();
+
                 chain.feed_str(&m);
             }
 
@@ -78,6 +81,8 @@ pub fn impersonate(
                 let _ = message.channel_id.say(&re.replace_all(&line, "@mention")
                     .into_owned());
                 //println!("{}", line);
+                let _ = message.channel_id.broadcast_typing();
+
             }
 
         } else {
@@ -99,6 +104,8 @@ pub fn impersonate(
 
         if !messages.is_empty() {
             for m in messages {
+                let _ = message.channel_id.broadcast_typing();
+
                 chain.feed_str(&m);
             }
             let _ = message.channel_id.say(&re.replace_all(
