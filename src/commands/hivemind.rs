@@ -33,8 +33,6 @@ pub fn hivemind(
         if !messages.is_empty() {
 
             for m in messages {
-                let _ = message.channel_id.broadcast_typing();
-
                 chain.feed_str(&m);
             }
 
@@ -73,11 +71,10 @@ pub fn hivemind(
         for content in rows {
             messages.push(content.unwrap());
         }
+        let _ = message.channel_id.broadcast_typing();
 
         if !messages.is_empty() {
             for m in messages {
-                let _ = message.channel_id.broadcast_typing();
-
                 chain.feed_str(&m);
             }
             let _ = message.channel_id.say(&re.replace_all(
