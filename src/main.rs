@@ -46,6 +46,7 @@ impl EventHandler for Handler {
         let mut data = _ctx.data.lock().unwrap();
         let sql_pool = data.get_mut::<Sqlpool>().unwrap().clone();
 
+
         commands::helper::download_all_messages(&guild, &sql_pool);
     }
 
@@ -150,7 +151,7 @@ fn main() {
 
     {
         let mut data = client.data.lock().unwrap();
-        data.insert::<Sqlpool>(pool);
+        data.insert::<Sqlpool>(pool.clone());
     }
 
 
