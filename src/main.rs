@@ -16,10 +16,10 @@ use typemap::Key;
 
 use r2d2_sqlite::SqliteConnectionManager;
 
-use serenity::client::Client;
-use serenity::ext::framework::{DispatchError, help_commands};
 use serenity::prelude::*;
 use serenity::model::*;
+use serenity::framework::{BuiltinFramework, DispatchError, help_commands};
+
 
 
 pub type SqlitePool = r2d2::Pool<SqliteConnectionManager>;
@@ -42,8 +42,9 @@ impl EventHandler for Handler {
         //download_all_messages(ready, sql_pool );
     }
 
+    //noinspection Annotator
     fn on_guild_create(&self, _ctx: Context, guild: Guild, _: bool) {
-        let mut data = _ctx.data.lock().unwrap();
+        let mut data = _ctx.data.lock();
         let sql_pool = data.get_mut::<Sqlpool>().unwrap().clone();
 
 
@@ -51,7 +52,7 @@ impl EventHandler for Handler {
     }
 
     fn on_message(&self, _ctx: Context, message: Message) {
-        let mut data = _ctx.data.lock().unwrap();
+        let mut data = _ctx.data.lock();
         let sql_pool = data.get_mut::<Sqlpool>().unwrap().clone();
 
         commands::helper::insert_into_db(
@@ -119,38 +120,38 @@ fn main() {
     println!("pre-init done");
 
     let mut client = Client::new(&config["token"], Handler);
-    client.with_framework(|f| {
-        f
-        .configure(|c| c.prefix("~")) // set the bot's prefix to "~"
-        .on_dispatch_error(|_ctx, msg, error| {
-            if let DispatchError::RateLimited(seconds) = error {
-        let _ = msg.channel_id.say(&format!("Try this again in {} seconds.", seconds));
-        }
-        })
-        .before(|_, msg, command_name| {
-            println!("Got command '{}' by user '{}'",
-                     command_name,
-                     msg.author.name);
-        true
-        })
-        .on("ping", commands::meta::ping)
-        .command("hivemind", |c| c
-        .use_quotes(false)
-        .min_args(0)
-        .guild_only(true)
-        .bucket("hivemind")
-        .exec(commands::hivemind::hivemind))
-        .command("impersonate", |c| c
-        .use_quotes(true)
-        .min_args(1)
-        .guild_only(true)
-        .exec(commands::impersonate::impersonate))
-        .simple_bucket("hivemind", 300)
-        .command("help", |c| c.exec_help(help_commands::plain))
-    });
+    client.with_framework(
+        BuiltinFramework::new()
+            .configure(|c| c.prefix("~")) // set the bot's prefix to "~"
+            .on_dispatch_error(|_ctx, msg, error| {
+                if let DispatchError::RateLimited(seconds) = error {
+                    let _ = msg.channel_id.say(&format!("Try this again in {} seconds.", seconds));
+                }
+            })
+            .before(|_, msg, command_name| {
+                println!("Got command '{}' by user '{}'",
+                         command_name,
+                         msg.author.name);
+                true
+            })
+            .on("ping", commands::meta::ping)
+            .command("hivemind", |c| c
+                .use_quotes(false)
+                .min_args(0)
+                .guild_only(true)
+                .bucket("hivemind")
+                .exec(commands::hivemind::hivemind))
+            .command("impersonate", |c| c
+                .use_quotes(true)
+                .min_args(1)
+                .guild_only(true)
+                .exec(commands::impersonate::impersonate))
+            .simple_bucket("hivemind", 300)
+            .command("help", |c| c.exec_help(help_commands::plain))
+    );
 
     {
-        let mut data = client.data.lock().unwrap();
+        let mut data = client.data.lock();
         data.insert::<Sqlpool>(pool.clone());
     }
 
@@ -159,5 +160,4 @@ fn main() {
     if let Err(why) = client.start_autosharded() {
         println!("Client error: {:?}", why);
     }
-
 }

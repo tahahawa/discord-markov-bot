@@ -9,12 +9,11 @@ pub fn hivemind(
     message: &Message,
     _args: Vec<String>,
 ) -> Result<(), String> {
-
     let _ = message.channel_id.broadcast_typing();
 
     let re = Regex::new(r"(<@!?\d*>)").unwrap();
 
-    let data = _context.data.lock().unwrap();
+    let data = _context.data.lock();
     let pool = data.get::<Sqlpool>().unwrap().clone();
     let conn = pool.get().unwrap();
     drop(data);
@@ -22,7 +21,7 @@ pub fn hivemind(
     if !_args.is_empty() {
         let mut chain: Chain<String> = Chain::new();
 
-        let mut stmt = conn.prepare("SELECT * FROM messages where content not like '%~hivemind%' and content not like '%~impersonate%' and content not like '%~ping%' " ).unwrap();
+        let mut stmt = conn.prepare("SELECT * FROM messages where content not like '%~hivemind%' and content not like '%~impersonate%' and content not like '%~ping%' ").unwrap();
         let rows = stmt.query_map_named(&[], |row| row.get(3)).unwrap();
 
         let mut messages = Vec::<String>::new();
@@ -31,7 +30,6 @@ pub fn hivemind(
         }
 
         if !messages.is_empty() {
-
             for m in messages {
                 chain.feed_str(&m);
             }
@@ -54,17 +52,14 @@ pub fn hivemind(
                     .into_owned());
                 //println!("{}", line);
                 let _ = message.channel_id.broadcast_typing();
-
             }
-
         } else {
             let _ = message.reply("They haven't said anything");
         }
-
     } else {
         let mut chain: Chain<String> = Chain::new();
 
-        let mut stmt = conn.prepare("SELECT * FROM messages where content not like '%~hivemind%' and content not like '%~impersonate%' and content not like '%~ping%' " ).unwrap();
+        let mut stmt = conn.prepare("SELECT * FROM messages where content not like '%~hivemind%' and content not like '%~impersonate%' and content not like '%~ping%' ").unwrap();
         let rows = stmt.query_map_named(&[], |row| row.get(3)).unwrap();
 
         let mut messages = Vec::<String>::new();
@@ -86,5 +81,4 @@ pub fn hivemind(
         }
     }
     Ok(())
-
 }

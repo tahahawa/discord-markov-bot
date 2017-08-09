@@ -4,12 +4,10 @@ use r2d2_sqlite::SqliteConnectionManager;
 
 
 pub fn get_guild_id_from_chan(chan: serenity::model::Channel) -> serenity::model::GuildId {
-
     match chan {
         serenity::model::Channel::Guild(guild_channel) => guild_channel.read().unwrap().guild_id,
         _ => serenity::model::GuildId(0),
     }
-
 }
 
 pub fn download_all_messages(
@@ -17,13 +15,12 @@ pub fn download_all_messages(
     pool: &r2d2::Pool<SqliteConnectionManager>,
 ) {
     for chan in guild.channels().unwrap() {
-
         let mut _messages = Vec::new();
         let channel_id = (chan.0).0;
 
         println!("{:?}", chan.1.name);
-        println!("");
-        println!("");
+        println!();
+        println!();
 
         if chan.1.bitrate != None {
             continue;
@@ -74,7 +71,6 @@ pub fn download_all_messages(
             );
             let message_vec = _messages.to_vec();
             for message in message_vec {
-
                 insert_into_db(
                     pool,
                     &message.id.0.to_string(),
@@ -134,7 +130,6 @@ fn biggest_id_exists_in_db(biggest_id: u64, pool: &r2d2::Pool<SqliteConnectionMa
 }
 
 fn get_latest_id_for_channel(channel_id: u64, pool: &r2d2::Pool<SqliteConnectionManager>) -> u64 {
-
     let conn = pool.get().unwrap();
 
     let row: Result<String, _> = conn.query_row("SELECT MAX(id) FROM messages where channel_id = ?",
@@ -155,7 +150,6 @@ pub fn insert_into_db(
     message_content: &String,
     message_timestamp: &String,
 ) {
-
     let conn = pool.get().unwrap();
 
     let _ = conn.execute(
@@ -169,5 +163,4 @@ pub fn insert_into_db(
             message_timestamp,
         ],
     );
-
 }

@@ -3,3 +3,5 @@ Cargo.lock
 config.yaml
 *.db*
 .vscode/settings.json
+*.iml
+.idea
