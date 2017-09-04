@@ -8,7 +8,9 @@ use commands;
 
 use Sqlpool;
 
-pub fn impersonate(_context: &mut Context, message: &Message, _args: Args) -> Result<(), String> {
+pub fn impersonate(_context: &mut Context, message: &Message, args: Args) -> Result<(), String> {
+
+    let _args: Vec<String> = args.multiple_quoted().unwrap();
     let chan = message.channel_id.get().unwrap();
 
     let _ = message.channel_id.broadcast_typing();
