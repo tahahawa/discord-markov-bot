@@ -1,14 +1,11 @@
 use serenity::client::*;
 use serenity::model::*;
+use serenity::framework::standard::Args;
 use regex::Regex;
 use markov::Chain;
 use Sqlpool;
 
-pub fn hivemind(
-    _context: &mut Context,
-    message: &Message,
-    _args: Vec<String>,
-) -> Result<(), String> {
+pub fn hivemind(_context: &mut Context, message: &Message, _args: Args) -> Result<(), String> {
     let _ = message.channel_id.broadcast_typing();
 
     let re = Regex::new(r"(<@!?\d*>)").unwrap();

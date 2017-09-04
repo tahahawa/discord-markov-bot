@@ -1,5 +1,6 @@
 use serenity::client::*;
 use serenity::model::*;
+use serenity::framework::standard::Args;
 use regex::Regex;
 use markov::Chain;
 
@@ -7,11 +8,7 @@ use commands;
 
 use Sqlpool;
 
-pub fn impersonate(
-    _context: &mut Context,
-    message: &Message,
-    _args: Vec<String>,
-) -> Result<(), String> {
+pub fn impersonate(_context: &mut Context, message: &Message, _args: Args) -> Result<(), String> {
     let chan = message.channel_id.get().unwrap();
 
     let _ = message.channel_id.broadcast_typing();
@@ -34,10 +31,10 @@ pub fn impersonate(
         for m in members {
             if m.display_name().to_lowercase() == _args[0].to_lowercase() ||
                 m.distinct().to_lowercase() == _args[0].to_lowercase()
-                {
-                    user = Some(m.user.read().unwrap().clone());
-                    break 'outer;
-                }
+            {
+                user = Some(m.user.read().unwrap().clone());
+                break 'outer;
+            }
         }
 
         count += 1;
