@@ -1,6 +1,7 @@
 use serenity::client::*;
 use serenity::model::*;
 use serenity::framework::standard::Args;
+use serenity::framework::standard::CommandError;
 use regex::Regex;
 use markov::Chain;
 
@@ -8,7 +9,7 @@ use commands;
 
 use Sqlpool;
 
-pub fn impersonate(_context: &mut Context, message: &Message, args: Args) -> Result<(), String> {
+pub fn impersonate(_context: &mut Context, message: &Message, args: Args) -> Result<(), CommandError> {
 
     let _args: Vec<String> = args.multiple_quoted().unwrap();
     let chan = message.channel_id.get().unwrap();
