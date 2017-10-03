@@ -16,4 +16,4 @@ regex = "0.2"
 [dependencies.serenity]
 git = "https://github.com/zeyla/serenity.git"
 default-features = false
-features = ["cache", "builtin_framework", "builder", "client", "utils", "model"]
+features = ["cache", "framework", "builder", "client", "utils", "model", "standard_framework"]

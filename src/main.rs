@@ -2,7 +2,7 @@ extern crate serenity;
 extern crate serde_yaml;
 extern crate r2d2;
 extern crate r2d2_sqlite;
-extern crate rusqlite;
+// extern crate rusqlite;
 extern crate markov;
 extern crate typemap;
 extern crate regex;
@@ -18,8 +18,7 @@ use r2d2_sqlite::SqliteConnectionManager;
 
 use serenity::prelude::*;
 use serenity::model::*;
-use serenity::framework::{BuiltinFramework, DispatchError, help_commands};
-
+use serenity::framework::standard::*;
 
 
 pub type SqlitePool = r2d2::Pool<SqliteConnectionManager>;
@@ -121,7 +120,7 @@ fn main() {
 
     let mut client = Client::new(&config["token"], Handler);
     client.with_framework(
-        BuiltinFramework::new()
+        StandardFramework::new()
             .configure(|c| c.prefix("~")) // set the bot's prefix to "~"
             .on_dispatch_error(|_ctx, msg, error| {
                 if let DispatchError::RateLimited(seconds) = error {
@@ -134,20 +133,20 @@ fn main() {
                          msg.author.name);
                 true
             })
-            .on("ping", commands::meta::ping)
+            .command("ping", |c| c.exec_str("Pong!"))
             .command("hivemind", |c| c
-                .use_quotes(false)
+                // .use_quotes(false)
                 .min_args(0)
                 .guild_only(true)
                 .bucket("hivemind")
                 .exec(commands::hivemind::hivemind))
             .command("impersonate", |c| c
-                .use_quotes(true)
+                // .use_quotes(true)
                 .min_args(1)
                 .guild_only(true)
                 .exec(commands::impersonate::impersonate))
             .simple_bucket("hivemind", 300)
-            .command("help", |c| c.exec_help(help_commands::plain))
+            .command("help", |c| c.exec_help(help_commands::plain)),
     );
 
     {
