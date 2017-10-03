@@ -7,7 +7,7 @@ variables:
   CARGO_HOME: $CI_PROJECT_DIR/cargo
 
 build:
-  image: "jimmycuadra/rust"
+  image: "rust"
   before_script:
     - apt-get update -qq && apt-get install -y -qq libssl-dev pkg-config libsqlite3-dev
     - cargo --version
@@ -26,7 +26,7 @@ build:
       - target/release/discord-markov-bot
 
 #test:
-#  image: "scorpil/rust:stable"
+#  image: "rust"
 #  before_script:
 #    - apt-get update -qq && apt-get install -y -qq libssl-dev pkg-config libsodium-dev libsqlite3-dev
 #    - cargo --version
