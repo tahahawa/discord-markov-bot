@@ -3,13 +3,6 @@ use r2d2;
 use r2d2_sqlite::SqliteConnectionManager;
 
 
-pub fn get_guild_id_from_chan(chan: serenity::model::Channel) -> serenity::model::GuildId {
-    match chan {
-        serenity::model::Channel::Guild(guild_channel) => guild_channel.read().unwrap().guild_id,
-        _ => serenity::model::GuildId(0),
-    }
-}
-
 pub fn download_all_messages(
     guild: &serenity::model::Guild,
     pool: &r2d2::Pool<SqliteConnectionManager>,
