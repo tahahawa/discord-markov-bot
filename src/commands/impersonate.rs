@@ -1,46 +1,33 @@
-use serenity::client::*;
-use serenity::model::*;
-use serenity::framework::standard::Args;
-use serenity::framework::standard::CommandError;
+use serenity::prelude::*;
+use serenity::model::prelude::*;
+use serenity::framework::standard::*;
 use regex::Regex;
 use markov::Chain;
 
-use commands;
+// use commands;
 
 use Sqlpool;
 
 pub fn impersonate(_context: &mut Context, message: &Message, args: Args) -> Result<(), CommandError> {
 
     let _args: Vec<String> = args.multiple_quoted().unwrap();
-    let chan = message.channel_id.get().unwrap();
+    // let chan = message.channel_id.get().unwrap();
 
-    let _ = message.channel_id.broadcast_typing();
+    let _ = message.channel_id.broadcast_typing();;
 
     let re = Regex::new(r"(<@!?\d*>)").unwrap();
 
-    let guild_id = commands::helper::get_guild_id_from_chan(chan);
+    let guild_arc = message.guild().unwrap();
+    let guild = guild_arc.read();
+
+    let member = guild.member_named( &_args.get(0).unwrap() );
+
+
     let mut user = None;
-    let mut offset = 0;
-    let mut count = 0;
-    'outer: while user.is_none() {
-        let members = guild_id.members(Some(1000), Some(offset)).unwrap();
 
-        if count == 40 || members.is_empty() {
-            break 'outer;
-        } else {
-            offset = members[members.len() - 1].user.read().unwrap().clone().id.0;
-        }
-
-        for m in members {
-            if m.display_name().to_lowercase() == _args[0].to_lowercase() ||
-                m.distinct().to_lowercase() == _args[0].to_lowercase()
-            {
-                user = Some(m.user.read().unwrap().clone());
-                break 'outer;
-            }
-        }
-
-        count += 1;
+    if member.is_some() {
+    let user_arc = member.unwrap();
+    user = Some(user_arc.user.read());
     }
 
     let data = _context.data.lock();
