@@ -1,10 +1,11 @@
-use serenity;
+use serenity::model::prelude::*;
+
 use r2d2;
 use r2d2_sqlite::SqliteConnectionManager;
 
 
 pub fn download_all_messages(
-    guild: &serenity::model::Guild,
+    guild: &Guild,
     pool: &r2d2::Pool<SqliteConnectionManager>,
 ) {
     for chan in guild.channels().unwrap() {
@@ -45,7 +46,7 @@ pub fn download_all_messages(
             }
         } else {
             let try = chan.0.messages(|g| {
-                g.after(serenity::model::MessageId(id as u64)).limit(100)
+                g.after(MessageId(id as u64)).limit(100)
             });
 
             match try {
@@ -89,7 +90,7 @@ pub fn download_all_messages(
                 break;
             } else {
                 let try = chan.0.messages(|g| {
-                    g.after(serenity::model::MessageId(id2 as u64)).limit(100)
+                    g.after(MessageId(id2 as u64)).limit(100)
                 });
 
                 match try {

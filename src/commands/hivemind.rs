@@ -1,15 +1,16 @@
-use serenity::client::*;
-use serenity::model::*;
-use serenity::framework::standard::Args;
-use serenity::framework::standard::CommandError;
+use serenity::prelude::*;
+use serenity::model::prelude::*;
+use serenity::framework::standard::*;
 use regex::Regex;
 use markov::Chain;
 use Sqlpool;
 
-pub fn hivemind(_context: &mut Context, message: &Message, _args: Args) -> Result<(), CommandError> {
+pub fn hivemind(_context: &mut Context, message: &Message, args: Args) -> Result<(), CommandError> {
     let _ = message.channel_id.broadcast_typing();
 
     let re = Regex::new(r"(<@!?\d*>)").unwrap();
+
+    let _args: Vec<String> = args.multiple_quoted().unwrap();
 
     let data = _context.data.lock();
     let pool = data.get::<Sqlpool>().unwrap().clone();

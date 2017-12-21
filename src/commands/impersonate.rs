@@ -1,7 +1,6 @@
-use serenity::client::*;
-use serenity::model::*;
-use serenity::framework::standard::Args;
-use serenity::framework::standard::CommandError;
+use serenity::prelude::*;
+use serenity::model::prelude::*;
+use serenity::framework::standard::*;
 use regex::Regex;
 use markov::Chain;
 
@@ -19,16 +18,16 @@ pub fn impersonate(_context: &mut Context, message: &Message, args: Args) -> Res
     let re = Regex::new(r"(<@!?\d*>)").unwrap();
 
     let guild_arc = message.guild().unwrap();
-    let guild = guild_arc.read().unwrap();
+    let guild = guild_arc.read();
 
-    let member = guild.member_named( &_args[0] );
+    let member = guild.member_named( &_args.get(0).unwrap() );
 
 
     let mut user = None;
 
     if member.is_some() {
     let user_arc = member.unwrap();
-    user = Some(user_arc.user.read().unwrap());
+    user = Some(user_arc.user.read());
     }
 
     let data = _context.data.lock();

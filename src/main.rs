@@ -1,3 +1,4 @@
+#[macro_use]
 extern crate serenity;
 extern crate serde_yaml;
 extern crate r2d2;
@@ -17,9 +18,8 @@ use typemap::Key;
 use r2d2_sqlite::SqliteConnectionManager;
 
 use serenity::prelude::*;
-use serenity::model::*;
+use serenity::model::prelude::*;
 use serenity::framework::standard::*;
-
 
 pub type SqlitePool = r2d2::Pool<SqliteConnectionManager>;
 
@@ -29,10 +29,16 @@ impl Key for Sqlpool {
     type Value = SqlitePool;
 }
 
+command!(ping(_ctx, msg, _args){
+    if let Err(why) = msg.channel_id.say("Pong!") {
+        println!("Error sending message: {:?}", why);
+    }
+});
+
 struct Handler;
 
 impl EventHandler for Handler {
-    fn on_ready(&self, _ctx: Context, ready: Ready) {
+    fn ready(&self, _ctx: Context, ready: Ready) {
         println!("{} is connected!", ready.user.name);
         println!("{:?}", ready.guilds);
         //let mut data = _ctx.data.lock().unwrap();
@@ -42,7 +48,7 @@ impl EventHandler for Handler {
     }
 
     //noinspection Annotator
-    fn on_guild_create(&self, _ctx: Context, guild: Guild, _: bool) {
+    fn guild_create(&self, _ctx: Context, guild: Guild, _: bool) {
         let mut data = _ctx.data.lock();
         let sql_pool = data.get_mut::<Sqlpool>().unwrap().clone();
 
@@ -50,7 +56,7 @@ impl EventHandler for Handler {
         commands::helper::download_all_messages(&guild, &sql_pool);
     }
 
-    fn on_message(&self, _ctx: Context, message: Message) {
+    fn message(&self, _ctx: Context, message: Message) {
         let mut data = _ctx.data.lock();
         let sql_pool = data.get_mut::<Sqlpool>().unwrap().clone();
 
@@ -118,7 +124,7 @@ fn main() {
 
     println!("pre-init done");
 
-    let mut client = Client::new(&config["token"], Handler);
+    let mut client = Client::new(&config["token"], Handler).unwrap();
     client.with_framework(
         StandardFramework::new()
             .configure(|c| c.prefix("~")) // set the bot's prefix to "~"
@@ -133,20 +139,19 @@ fn main() {
                          msg.author.name);
                 true
             })
-            .command("ping", |c| c.exec_str("Pong!"))
+            .command("ping", |c| c.cmd(ping))
             .command("hivemind", |c| c
                 // .use_quotes(false)
                 .min_args(0)
                 .guild_only(true)
                 .bucket("hivemind")
-                .exec(commands::hivemind::hivemind))
+                .cmd(commands::hivemind::hivemind))
             .command("impersonate", |c| c
                 // .use_quotes(true)
                 .min_args(1)
                 .guild_only(true)
-                .exec(commands::impersonate::impersonate))
-            .simple_bucket("hivemind", 300)
-            .command("help", |c| c.exec_help(help_commands::plain)),
+                .cmd(commands::impersonate::impersonate))
+            .simple_bucket("hivemind", 300),
     );
 
     {
@@ -159,4 +164,6 @@ fn main() {
     if let Err(why) = client.start_autosharded() {
         println!("Client error: {:?}", why);
     }
+
 }
+
