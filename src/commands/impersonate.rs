@@ -20,8 +20,7 @@ pub fn impersonate(_context: &mut Context, message: &Message, args: Args) -> Res
     let guild_arc = message.guild().unwrap();
     let guild = guild_arc.read();
 
-    let member = guild.member_named( &_args.get(0).unwrap() );
-
+    let member = guild.member_named( &_args[0] );
 
     let mut user = None;
 

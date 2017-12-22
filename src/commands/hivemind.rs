@@ -10,7 +10,7 @@ pub fn hivemind(_context: &mut Context, message: &Message, args: Args) -> Result
 
     let re = Regex::new(r"(<@!?\d*>)").unwrap();
 
-    let _args: Vec<String> = args.multiple_quoted().unwrap();
+    let _args: Vec<String> = args.multiple().unwrap();
 
     let data = _context.data.lock();
     let pool = data.get::<Sqlpool>().unwrap().clone();
