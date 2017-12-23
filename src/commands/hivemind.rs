@@ -12,8 +12,7 @@ pub fn hivemind(_context: &mut Context, message: &Message, mut args: Args) -> Re
 
     println!("args: {:?}", args);
     
-    let count: usize = args.single().unwrap_or(1);
-
+    let count: usize = args.single_quoted().unwrap_or(args.single().unwrap_or(1));
 
     let data = _context.data.lock();
     let pool = data.get::<Sqlpool>().unwrap().clone();
