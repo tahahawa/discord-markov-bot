@@ -10,8 +10,8 @@ pub fn impersonate(_context: &mut Context, message: &Message, mut args: Args) ->
 
     println!("args: {:?}", args);
 
-    let username: String = args.single_quoted().unwrap_or(args.single().unwrap_or("".to_owned()));
-    let count: usize = args.single_quoted().unwrap_or(args.single().unwrap_or(1));
+    let username: String = args.single_quoted().unwrap_or("".to_owned());
+    let count: usize = args.single_quoted().unwrap_or(1);
 
     // let chan = message.channel_id.get().unwrap();
 
