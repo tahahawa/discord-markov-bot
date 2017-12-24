@@ -7,3 +7,4 @@ config.yaml
 .idea
 *.bk
 *.fmt
+config.yaml.bak
