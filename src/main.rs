@@ -100,10 +100,9 @@ fn main() {
 
     let dbname = config["db"].clone();
 
-    let r2d2_config = r2d2::Config::default();
-    let manager = SqliteConnectionManager::new(&dbname);
+    let manager = r2d2_sqlite::SqliteConnectionManager::file(&dbname);
 
-    let pool = r2d2::Pool::new(r2d2_config, manager).unwrap();
+    let pool = r2d2::Pool::builder().max_size(10).build(manager).unwrap();
     let conn = pool.get().unwrap();
 
     conn.execute(

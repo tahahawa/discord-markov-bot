@@ -1,15 +1,15 @@
 [package]
 name = "discord-markov-bot"
-version = "0.3.0"
+version = "0.3.1"
 authors = ["Taha Hawa <tahahawa@gmail.com>"]
 
 [dependencies]
 serde = "1.0"
 serde_yaml = "0.7"
-r2d2 = "0.7"
-r2d2_sqlite = "0.2"
-rusqlite = "0.12"
-markov = "0.0.32"
+r2d2 = "0.8"
+r2d2_sqlite = "0.5"
+rusqlite = "0.13"
+markov = "0.0.33"
 typemap = "0.3.3"
 regex = "0.2"
 
