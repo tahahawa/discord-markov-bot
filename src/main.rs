@@ -40,11 +40,18 @@ struct Handler;
 impl EventHandler for Handler {
     fn ready(&self, _ctx: Context, ready: Ready) {
         println!("{} is connected!", ready.user.name);
-        println!("{:?}", ready.guilds);
+        // println!("{:?}", ready.guilds);
         //let mut data = _ctx.data.lock().unwrap();
         //let sql_pool = data.get_mut::<Sqlpool>().unwrap().clone();
 
         //download_all_messages(ready, sql_pool );
+        let cache = serenity::CACHE.read();
+        println!(
+            "guilds: {:?}; channels: {}; users: {}",
+            cache.guilds,
+            cache.channels.len(),
+            cache.users.len()
+        );
     }
 
     //noinspection Annotator
