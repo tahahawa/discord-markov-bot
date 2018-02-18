@@ -3,11 +3,7 @@ use serenity::model::prelude::*;
 use r2d2;
 use r2d2_sqlite::SqliteConnectionManager;
 
-
-pub fn download_all_messages(
-    guild: &Guild,
-    pool: &r2d2::Pool<SqliteConnectionManager>,
-) {
+pub fn download_all_messages(guild: &Guild, pool: &r2d2::Pool<SqliteConnectionManager>) {
     for chan in guild.channels().unwrap() {
         let mut _messages = Vec::new();
         let channel_id = (chan.0).0;
@@ -34,7 +30,6 @@ pub fn download_all_messages(
             continue;
         }
 
-
         let id = get_latest_id_for_channel(channel_id, pool);
 
         if id == 0 {
@@ -45,9 +40,8 @@ pub fn download_all_messages(
                 _ => _messages = try.unwrap(),
             }
         } else {
-            let try = chan.0.messages(|g| {
-                g.after(MessageId(id as u64)).limit(100)
-            });
+            let try = chan.0
+                .messages(|g| g.after(MessageId(id as u64)).limit(100));
 
             match try {
                 Err(_) => println!("error getting messages"),
@@ -89,9 +83,8 @@ pub fn download_all_messages(
             } else if id2 >= biggest_id {
                 break;
             } else {
-                let try = chan.0.messages(|g| {
-                    g.after(MessageId(id2 as u64)).limit(100)
-                });
+                let try = chan.0
+                    .messages(|g| g.after(MessageId(id2 as u64)).limit(100));
 
                 match try {
                     Err(_) => println!("error getting messages"),
@@ -109,13 +102,14 @@ pub fn download_all_messages(
 fn biggest_id_exists_in_db(biggest_id: u64, pool: &r2d2::Pool<SqliteConnectionManager>) -> bool {
     let conn = pool.get().unwrap();
 
-    let biggest_id_row: Result<String, _> =
-        conn.query_row("SELECT * FROM messages where id = ?",
-                       &[&(biggest_id.to_string())],
-                       |row| match row.get(0) {
-                           None::<String> => 0.to_string(),
-                           _ => row.get(0),
-                       });
+    let biggest_id_row: Result<String, _> = conn.query_row(
+        "SELECT * FROM messages where id = ?",
+        &[&(biggest_id.to_string())],
+        |row| match row.get(0) {
+            None::<String> => 0.to_string(),
+            _ => row.get(0),
+        },
+    );
 
     match biggest_id_row {
         Result::Ok(_) => true,
@@ -126,12 +120,14 @@ fn biggest_id_exists_in_db(biggest_id: u64, pool: &r2d2::Pool<SqliteConnectionMa
 fn get_latest_id_for_channel(channel_id: u64, pool: &r2d2::Pool<SqliteConnectionManager>) -> u64 {
     let conn = pool.get().unwrap();
 
-    let row: Result<String, _> = conn.query_row("SELECT MAX(id) FROM messages where channel_id = ?",
-                                                &[&channel_id.to_string()],
-                                                |row| match row.get(0) {
-                                                    None::<String> => 0.to_string(),
-                                                    _ => row.get(0),
-                                                });
+    let row: Result<String, _> = conn.query_row(
+        "SELECT MAX(id) FROM messages where channel_id = ?",
+        &[&channel_id.to_string()],
+        |row| match row.get(0) {
+            None::<String> => 0.to_string(),
+            _ => row.get(0),
+        },
+    );
 
     row.unwrap().parse::<u64>().unwrap()
 }
@@ -148,7 +144,7 @@ pub fn insert_into_db(
 
     let _ = conn.execute(
         "INSERT or REPLACE INTO messages (id, channel_id, author, content, timestamp) \
-                                          VALUES (?1, ?2, ?3, ?4, ?5)",
+         VALUES (?1, ?2, ?3, ?4, ?5)",
         &[
             message_id,
             (channel_id),

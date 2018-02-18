@@ -1,12 +1,12 @@
-#[macro_use]
-extern crate serenity;
-extern crate serde_yaml;
 extern crate r2d2;
 extern crate r2d2_sqlite;
+extern crate serde_yaml;
+#[macro_use]
+extern crate serenity;
 // extern crate rusqlite;
 extern crate markov;
-extern crate typemap;
 extern crate regex;
+extern crate typemap;
 
 mod commands;
 
@@ -40,18 +40,24 @@ struct Handler;
 impl EventHandler for Handler {
     fn ready(&self, _ctx: Context, ready: Ready) {
         println!("{} is connected!", ready.user.name);
-        println!("{:?}", ready.guilds);
+        // println!("{:?}", ready.guilds);
         //let mut data = _ctx.data.lock().unwrap();
         //let sql_pool = data.get_mut::<Sqlpool>().unwrap().clone();
 
         //download_all_messages(ready, sql_pool );
+        let cache = serenity::CACHE.read();
+        println!(
+            "guilds: {:?}; channels: {}; users: {}",
+            cache.guilds,
+            cache.channels.len(),
+            cache.users.len()
+        );
     }
 
     //noinspection Annotator
     fn guild_create(&self, _ctx: Context, guild: Guild, _: bool) {
         let mut data = _ctx.data.lock();
         let sql_pool = data.get_mut::<Sqlpool>().unwrap().clone();
-
 
         commands::helper::download_all_messages(&guild, &sql_pool);
     }
@@ -117,7 +123,7 @@ fn main() {
 
     conn.execute(
         "INSERT or REPLACE INTO messages (id, channel_id, author, content, timestamp) \
-                                          VALUES (0, 0, 0, 0, 0)",
+         VALUES (0, 0, 0, 0, 0)",
         &[],
     ).unwrap();
 
@@ -158,11 +164,8 @@ fn main() {
         data.insert::<Sqlpool>(pool.clone());
     }
 
-
     // start listening for events by starting a single shard
     if let Err(why) = client.start_autosharded() {
         println!("Client error: {:?}", why);
     }
-
 }
-
