@@ -5,14 +5,18 @@ use regex::Regex;
 use markov::Chain;
 use Sqlpool;
 
-pub fn hivemind(_context: &mut Context, message: &Message, mut args: Args) -> Result<(), CommandError> {
+pub fn hivemind(
+    _context: &mut Context,
+    message: &Message,
+    mut args: Args,
+) -> Result<(), CommandError> {
     let _ = message.channel_id.broadcast_typing();
 
     let re = Regex::new(r"(<@!?\d*>)").unwrap();
 
     println!("args: {:?}", args);
-    
-    let count: usize = args.single_quoted().unwrap_or(args.single().unwrap_or(1));
+
+    let count: usize = args.single_quoted().unwrap_or(1);
 
     let data = _context.data.lock();
     let pool = data.get::<Sqlpool>().unwrap().clone();
@@ -35,8 +39,9 @@ pub fn hivemind(_context: &mut Context, message: &Message, mut args: Args) -> Re
         }
 
         for line in chain.str_iter_for(count) {
-            let _ = message.channel_id.say(&re.replace_all(&line, "@mention")
-                .into_owned());
+            let _ = message
+                .channel_id
+                .say(&re.replace_all(&line, "@mention").into_owned());
             //println!("{}", line);
             let _ = message.channel_id.broadcast_typing();
         }

@@ -6,11 +6,14 @@ use markov::Chain;
 
 use Sqlpool;
 
-pub fn impersonate(_context: &mut Context, message: &Message, mut args: Args) -> Result<(), CommandError> {
-
+pub fn impersonate(
+    _context: &mut Context,
+    message: &Message,
+    mut args: Args,
+) -> Result<(), CommandError> {
     println!("args: {:?}", args);
 
-    let username: String = args.single_quoted().unwrap_or("".to_owned());
+    let username: String = args.single_quoted().unwrap_or_else(|_| "".to_owned());
     let count: usize = args.single_quoted().unwrap_or(1);
 
     // let chan = message.channel_id.get().unwrap();
@@ -22,14 +25,14 @@ pub fn impersonate(_context: &mut Context, message: &Message, mut args: Args) ->
     let guild_arc = message.guild().unwrap();
     let guild = guild_arc.read();
 
-    let member = guild.member_named( &username );
+    let member = guild.member_named(&username);
 
-    let mut user = None;
-
-    if member.is_some() {
-    let user_arc = member.unwrap();
-    user = Some(user_arc.user.read());
-    }
+    let user = if member.is_some() {
+        let user_arc = member.unwrap();
+        Some(user_arc.user.read())
+    } else {
+        None
+    };
 
     let data = _context.data.lock();
     let pool = data.get::<Sqlpool>().unwrap().clone();
@@ -57,12 +60,12 @@ pub fn impersonate(_context: &mut Context, message: &Message, mut args: Args) ->
             // let re_iter = Regex::new(r"\D").unwrap();
             // let iter_test = re_iter.replace_all(&count, "");
 
-
             // let iter: usize = iter_test.parse::<usize>().unwrap_or(1);
 
             for line in chain.str_iter_for(count) {
-                let _ = message.channel_id.say(&re.replace_all(&line, "@mention")
-                    .into_owned());
+                let _ = message
+                    .channel_id
+                    .say(&re.replace_all(&line, "@mention").into_owned());
                 //println!("{}", line);
                 let _ = message.channel_id.broadcast_typing();
             }
