@@ -35,6 +35,17 @@ command!(ping(_ctx, msg, _args){
     }
 });
 
+command!(stats(_ctx, msg, _args){
+        let cache = serenity::CACHE.read();
+        if let Err(why) = msg.channel_id.say(
+            format!("guilds: {:?}; channels: {}; users: {}", 
+            cache.guilds,
+            cache.channels.len(),
+            cache.users.len())){
+                println!("Error sending message: {:?}", why);
+                };
+});
+
 struct Handler;
 
 impl EventHandler for Handler {
@@ -145,6 +156,9 @@ fn main() {
                 true
             })
             .command("ping", |c| c.cmd(ping))
+            .command("stats", |c| c
+                .owners_only(true)
+                .cmd(stats))
             .command("hivemind", |c| c
                 // .use_quotes(false)
                 .min_args(0)
