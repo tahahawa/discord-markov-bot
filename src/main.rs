@@ -37,9 +37,21 @@ command!(ping(_ctx, msg, _args){
 
 command!(stats(_ctx, msg, _args){
         let cache = serenity::CACHE.read();
+        let mut guild_names: Vec<String> = Vec::new();
+
+        for (id, _) in cache.clone().guilds {
+            guild_names.push(id.get().unwrap().name);
+        }
+
+        println!("guilds: {:?}; channels: {}; users: {}", 
+        guild_names,
+        cache.channels.len(),
+        cache.users.len());
+
+
         if let Err(why) = msg.channel_id.say(
             format!("guilds: {:?}; channels: {}; users: {}", 
-            cache.guilds,
+            guild_names,
             cache.channels.len(),
             cache.users.len())){
                 println!("Error sending message: {:?}", why);
@@ -58,7 +70,6 @@ impl EventHandler for Handler {
         //download_all_messages(ready, sql_pool );
     }
 
-    //noinspection Annotator
     fn guild_create(&self, _ctx: Context, guild: Guild, _: bool) {
         let mut data = _ctx.data.lock();
         let sql_pool = data.get_mut::<Sqlpool>().unwrap().clone();
