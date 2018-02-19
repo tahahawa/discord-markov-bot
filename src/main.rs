@@ -68,13 +68,6 @@ impl EventHandler for Handler {
         //let sql_pool = data.get_mut::<Sqlpool>().unwrap().clone();
 
         //download_all_messages(ready, sql_pool );
-        let cache = serenity::CACHE.read();
-        println!(
-            "guilds: {:?}; channels: {}; users: {}",
-            cache.guilds,
-            cache.channels.len(),
-            cache.users.len()
-        );
     }
 
     fn guild_create(&self, _ctx: Context, guild: Guild, _: bool) {
