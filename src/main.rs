@@ -161,7 +161,6 @@ fn main() {
             })
             .command("ping", |c| c.cmd(ping))
             .command("stats", |c| c
-                .owners_only(true)
                 .cmd(stats))
             .command("hivemind", |c| c
                 // .use_quotes(false)
