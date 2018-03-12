@@ -77,7 +77,6 @@ impl EventHandler for Handler {
     fn guild_create(&self, _ctx: Context, guild: Guild, _: bool) {
         let mut data = _ctx.data.lock();
         let sql_pool = data.get_mut::<Sqlpool>().unwrap().clone();
-        drop(data);
 
         commands::helper::download_all_messages(&guild, &sql_pool);
     }
