@@ -1,9 +1,8 @@
 use serenity::model::prelude::*;
+use diesel::prelude::*;
+use diesel::r2d2::*;
 
-use r2d2;
-use r2d2_sqlite::SqliteConnectionManager;
-
-pub fn download_all_messages(guild: &Guild, pool: &r2d2::Pool<SqliteConnectionManager>) {
+pub fn download_all_messages(guild: &Guild, pool: &Pool<ConnectionManager<SqliteConnection>>) {
     for chan in guild.channels().unwrap() {
         let mut _messages = Vec::new();
         let channel_id = (chan.0).0;
@@ -99,58 +98,91 @@ pub fn download_all_messages(guild: &Guild, pool: &r2d2::Pool<SqliteConnectionMa
     println!("Downloaded all messages for {:?}", guild.name);
 }
 
-fn biggest_id_exists_in_db(biggest_id: u64, pool: &r2d2::Pool<SqliteConnectionManager>) -> bool {
+fn biggest_id_exists_in_db(biggest_id: u64, pool: &Pool<ConnectionManager<SqliteConnection>>) -> bool {
     let conn = pool.get().unwrap();
 
-    let biggest_id_row: Result<String, _> = conn.query_row(
-        "SELECT * FROM messages where id = ?",
-        &[&(biggest_id.to_string())],
-        |row| match row.get(0) {
-            None::<String> => 0.to_string(),
-            _ => row.get(0),
-        },
-    );
+    use schema::messages;
+    use schema::messages::dsl::*;
 
-    match biggest_id_row {
-        Result::Ok(_) => true,
-        Result::Err(_) => false,
+    let biggest_id_db_vec = messages::table
+    .order(id.desc())
+    .select(id)
+    .limit(1)
+    .filter(id.eq(biggest_id.to_string()))
+    .load::<Option<String>>(&conn)
+    .expect("Error loading biggest id");
+
+    if biggest_id_db_vec.is_empty() {
+        return false;
     }
+    else {
+        return true;
+    }
+
 }
 
-fn get_latest_id_for_channel(channel_id: u64, pool: &r2d2::Pool<SqliteConnectionManager>) -> u64 {
+fn get_latest_id_for_channel(chan_id: u64, pool: &Pool<ConnectionManager<SqliteConnection>>) -> u64 {
     let conn = pool.get().unwrap();
 
-    let row: Result<String, _> = conn.query_row(
-        "SELECT MAX(id) FROM messages where channel_id = ?",
-        &[&channel_id.to_string()],
-        |row| match row.get(0) {
-            None::<String> => 0.to_string(),
-            _ => row.get(0),
-        },
-    );
+    use schema::messages;
+    use schema::messages::dsl::*;
 
-    row.unwrap().parse::<u64>().unwrap()
+
+    let mut chan_id_vec = messages::table
+    .order(id.desc())
+    .select(id)
+    .limit(1)
+    .filter(channel_id.eq(chan_id.to_string()))
+    .load::<Option<String>>(&conn)
+    .unwrap_or(vec![Some("0".to_owned()) ]);
+
+    if chan_id_vec.is_empty() {
+        return 0;
+    }
+
+    let latest_chan_id =  chan_id_vec.pop().unwrap().unwrap().parse::<u64>().unwrap_or(0);
+    
+    latest_chan_id
+
 }
 
 pub fn insert_into_db(
-    pool: &r2d2::Pool<SqliteConnectionManager>,
+    pool: &Pool<ConnectionManager<SqliteConnection>>,
     message_id: &String,
-    channel_id: &String,
+    chan_id: &String,
     message_author: &String,
     message_content: &String,
     message_timestamp: &String,
 ) {
+    use models::*;
+    use schema::messages;
+    use diesel;
+
     let conn = pool.get().unwrap();
 
-    let _ = conn.execute(
-        "INSERT or REPLACE INTO messages (id, channel_id, author, content, timestamp) \
-         VALUES (?1, ?2, ?3, ?4, ?5)",
-        &[
-            message_id,
-            (channel_id),
-            (message_author),
-            message_content,
-            message_timestamp,
-        ],
-    );
+    let vals = InsertableMessage {
+    id: message_id.to_string(),
+    channel_id: chan_id.to_string(),
+    author: message_author.to_string(),
+    content: message_content.to_string(),
+    timestamp: message_timestamp.to_string(),
+    };
+
+    let _ = diesel::replace_into(messages::table)
+    .values(&vals)
+    
+    .execute(&conn)
+    .expect("Error inserting values");
+
+    // let _ = conn.execute(
+    //     "INSERT or REPLACE INTO messages (id, channel_id, author, content, timestamp) \
+    //      VALUES (?1, ?2, ?3, ?4, ?5)",
+    //     &[
+    //         message_id,
+    //         (channel_id),
+    //         (message_author),
+    //         message_content,
+    //         message_timestamp,
+    //     ],
+    // );
 }

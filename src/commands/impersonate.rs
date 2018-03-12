@@ -3,8 +3,10 @@ use serenity::model::prelude::*;
 use serenity::framework::standard::*;
 use regex::Regex;
 use markov::Chain;
-
+use diesel::prelude::*;
 use Sqlpool;
+use diesel::dsl::*;
+
 
 pub fn impersonate(
     _context: &mut Context,
@@ -43,17 +45,31 @@ pub fn impersonate(
         let user = user.unwrap();
         let mut chain: Chain<String> = Chain::new();
 
-        let mut stmt = conn.prepare("SELECT * FROM messages where author = :id and content not like '%~hivemind%' and content not like '%~impersonate%' and content not like '%~ping%' ").unwrap();
-        let rows = stmt.query_map_named(&[(":id", &(user.id.0.to_string()))], |row| row.get(3))
-            .unwrap();
 
-        let mut messages = Vec::<String>::new();
-        for content in rows {
-            messages.push(content.unwrap());
-        }
+        // use schema::messages;
+        // use models::*;
+        use schema::messages::dsl::*;
 
-        if !messages.is_empty() {
-            for m in messages {
+        let results = messages
+        .select(content)
+        .filter(author.eq(user.id.0.to_string()) )
+        .filter(not(content.like("%~hivemind%")) )
+        .filter(not(content.like("%~impersonate%")) )
+        .filter(not(content.like("%~ping%")) )
+        .load::<String>(&conn)
+        .expect("Error loading messages");
+
+        // let mut stmt = conn.prepare("SELECT * FROM messages where author = :id and content not like '%~hivemind%' and content not like '%~impersonate%' and content not like '%~ping%' ").unwrap();
+        // let rows = stmt.query_map_named(&[(":id", &(user.id.0.to_string()))], |row| row.get(3))
+        //     .unwrap();
+
+        // let mut messages = Vec::<String>::new();
+        // for content in rows {
+        //     messages.push(content.unwrap());
+        // }
+
+        if !results.is_empty() {
+            for m in results {
                 chain.feed_str(&m);
             }
 

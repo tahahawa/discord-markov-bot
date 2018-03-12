@@ -1,32 +1,36 @@
-extern crate r2d2;
-extern crate r2d2_sqlite;
-extern crate serde_yaml;
+#[macro_use]
+extern crate diesel;
+
 #[macro_use]
 extern crate serenity;
-// extern crate rusqlite;
+
+extern crate serde_yaml;
 extern crate markov;
 extern crate regex;
 extern crate typemap;
 
-mod commands;
 
 use std::fs::File;
 use std::io::Read;
 use std::collections::BTreeMap;
 use typemap::Key;
 
-use r2d2_sqlite::SqliteConnectionManager;
-
 use serenity::prelude::*;
 use serenity::model::prelude::*;
 use serenity::framework::standard::*;
 
-pub type SqlitePool = r2d2::Pool<SqliteConnectionManager>;
+use diesel::prelude::*;
+
+pub mod commands;
+pub mod schema;
+pub mod models;
+
+pub type Pool = diesel::r2d2::Pool<diesel::r2d2::ConnectionManager<SqliteConnection>>;
 
 pub struct Sqlpool;
 
 impl Key for Sqlpool {
-    type Value = SqlitePool;
+    type Value = Pool;
 }
 
 command!(ping(_ctx, msg, _args){
@@ -73,6 +77,7 @@ impl EventHandler for Handler {
     fn guild_create(&self, _ctx: Context, guild: Guild, _: bool) {
         let mut data = _ctx.data.lock();
         let sql_pool = data.get_mut::<Sqlpool>().unwrap().clone();
+        drop(data);
 
         commands::helper::download_all_messages(&guild, &sql_pool);
     }
@@ -121,26 +126,25 @@ fn main() {
 
     let dbname = config["db"].clone();
 
-    let manager = r2d2_sqlite::SqliteConnectionManager::file(&dbname);
+    let manager = diesel::r2d2::ConnectionManager::new(dbname.to_string());
 
-    let pool = r2d2::Pool::builder().max_size(10).build(manager).unwrap();
+    let pool = diesel::r2d2::Pool::builder().max_size(300).build(manager).unwrap();
     let conn = pool.get().unwrap();
 
-    conn.execute(
-        "CREATE TABLE IF NOT EXISTS messages (
-                  id                        TEXT PRIMARY KEY,
-                  channel_id        TEXT NOT NULL,
-                  author              TEXT NOT NULL,
-                  content             TEXT NOT NULL,
-                  timestamp       TEXT NOT NULL)",
-        &[],
-    ).unwrap();
+    use schema::messages;
 
-    conn.execute(
-        "INSERT or REPLACE INTO messages (id, channel_id, author, content, timestamp) \
-         VALUES (0, 0, 0, 0, 0)",
-        &[],
-    ).unwrap();
+    let def_vals = models::InsertableMessage {
+    id: "0".to_string(),
+    channel_id: "0".to_string(),
+    author: "0".to_string(),
+    content: "0".to_string(),
+    timestamp: "0".to_string(),
+    };
+
+    let _ = diesel::insert_or_ignore_into(messages::table)
+    .values(&def_vals)
+    .execute(&conn)
+    .expect("Error inserting default values");
 
     println!("pre-init done");
 
