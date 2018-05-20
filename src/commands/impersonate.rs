@@ -7,6 +7,10 @@ use diesel::prelude::*;
 use Sqlpool;
 use diesel::dsl::*;
 
+enum IdOrUsername {
+    Id(u64),
+    Username(String),
+}
 
 pub fn impersonate(
     _context: &mut Context,
@@ -15,7 +19,11 @@ pub fn impersonate(
 ) -> Result<(), CommandError> {
     println!("args: {:?}", args);
 
-    let username: String = args.single_quoted().unwrap_or_else(|_| "".to_owned());
+    let fetch_from = match args.single::<u64>() {
+        Ok(id) => IdOrUsername::Id(id),
+        Err(_) => IdOrUsername::Username(args.single_quoted().unwrap_or_else(|_| "".to_owned())),
+    };
+
     let count: usize = args.single_quoted().unwrap_or(1);
 
     // let chan = message.channel_id.get().unwrap();
@@ -27,22 +35,19 @@ pub fn impersonate(
     let guild_arc = message.guild().unwrap();
     let guild = guild_arc.read();
 
-    let member = guild.member_named(&username);
-
-    let user = if member.is_some() {
-        let user_arc = member.unwrap();
-        Some(user_arc.user.read())
-    } else {
-        None
+    let member = match fetch_from {
+        IdOrUsername::Id(id) => guild.members.get(&UserId(id)),
+        IdOrUsername::Username(username) => guild.member_named(&username),
     };
+
+    let user = member.map(|m| m.user.read()); 
 
     let data = _context.data.lock();
     let pool = data.get::<Sqlpool>().unwrap().clone();
     let conn = pool.get().unwrap();
     drop(data);
 
-    if user.is_some() {
-        let user = user.unwrap();
+    if let Some(user) = user {
         let mut chain: Chain<String> = Chain::new();
 
 
