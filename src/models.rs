@@ -1,7 +1,6 @@
 use super::schema::messages;
 
-#[derive(Queryable)]
-#[derive(Insertable)]
+#[derive(Queryable, Insertable)]
 #[table_name = "messages"]
 
 pub struct InsertableMessage {

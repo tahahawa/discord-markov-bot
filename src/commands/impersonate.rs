@@ -1,11 +1,11 @@
-use serenity::prelude::*;
-use serenity::model::prelude::*;
-use serenity::framework::standard::*;
-use regex::Regex;
-use markov::Chain;
-use diesel::prelude::*;
-use Sqlpool;
 use diesel::dsl::*;
+use diesel::prelude::*;
+use markov::Chain;
+use regex::Regex;
+use serenity::framework::standard::*;
+use serenity::model::prelude::*;
+use serenity::prelude::*;
+use Sqlpool;
 
 enum IdOrUsername {
     Id(u64),
@@ -40,7 +40,7 @@ pub fn impersonate(
         IdOrUsername::Username(username) => guild.member_named(&username),
     };
 
-    let user = member.map(|m| m.user.read()); 
+    let user = member.map(|m| m.user.read());
 
     let data = _context.data.lock();
     let pool = data.get::<Sqlpool>().unwrap().clone();
@@ -50,19 +50,18 @@ pub fn impersonate(
     if let Some(user) = user {
         let mut chain: Chain<String> = Chain::new();
 
-
         // use schema::messages;
         // use models::*;
         use schema::messages::dsl::*;
 
         let results = messages
-        .select(content)
-        .filter(author.eq(user.id.0.to_string()) )
-        .filter(not(content.like("%~hivemind%")) )
-        .filter(not(content.like("%~impersonate%")) )
-        .filter(not(content.like("%~ping%")) )
-        .load::<String>(&conn)
-        .expect("Error loading messages");
+            .select(content)
+            .filter(author.eq(user.id.0.to_string()))
+            .filter(not(content.like("%~hivemind%")))
+            .filter(not(content.like("%~impersonate%")))
+            .filter(not(content.like("%~ping%")))
+            .load::<String>(&conn)
+            .expect("Error loading messages");
 
         // let mut stmt = conn.prepare("SELECT * FROM messages where author = :id and content not like '%~hivemind%' and content not like '%~impersonate%' and content not like '%~ping%' ").unwrap();
         // let rows = stmt.query_map_named(&[(":id", &(user.id.0.to_string()))], |row| row.get(3))
