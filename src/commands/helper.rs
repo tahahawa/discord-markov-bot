@@ -1,6 +1,6 @@
-use serenity::model::prelude::*;
 use diesel::prelude::*;
 use diesel::r2d2::*;
+use serenity::model::prelude::*;
 
 pub fn download_all_messages(guild: &Guild, pool: &Pool<ConnectionManager<SqliteConnection>>) {
     for chan in guild.channels().unwrap() {
@@ -39,7 +39,8 @@ pub fn download_all_messages(guild: &Guild, pool: &Pool<ConnectionManager<Sqlite
                 _ => _messages = try.unwrap(),
             }
         } else {
-            let try = chan.0
+            let try = chan
+                .0
                 .messages(|g| g.after(MessageId(id as u64)).limit(100));
 
             match try {
@@ -82,7 +83,8 @@ pub fn download_all_messages(guild: &Guild, pool: &Pool<ConnectionManager<Sqlite
             } else if id2 >= biggest_id {
                 break;
             } else {
-                let try = chan.0
+                let try = chan
+                    .0
                     .messages(|g| g.after(MessageId(id2 as u64)).limit(100));
 
                 match try {
@@ -98,52 +100,59 @@ pub fn download_all_messages(guild: &Guild, pool: &Pool<ConnectionManager<Sqlite
     println!("Downloaded all messages for {:?}", guild.name);
 }
 
-fn biggest_id_exists_in_db(biggest_id: u64, pool: &Pool<ConnectionManager<SqliteConnection>>) -> bool {
+fn biggest_id_exists_in_db(
+    biggest_id: u64,
+    pool: &Pool<ConnectionManager<SqliteConnection>>,
+) -> bool {
     let conn = pool.get().unwrap();
 
     use schema::messages;
     use schema::messages::dsl::*;
 
     let biggest_id_db_vec = messages::table
-    .order(id.desc())
-    .select(id)
-    .limit(1)
-    .filter(id.eq(biggest_id.to_string()))
-    .load::<Option<String>>(&conn)
-    .expect("Error loading biggest id");
+        .order(id.desc())
+        .select(id)
+        .limit(1)
+        .filter(id.eq(biggest_id.to_string()))
+        .load::<Option<String>>(&conn)
+        .expect("Error loading biggest id");
 
     if biggest_id_db_vec.is_empty() {
         return false;
-    }
-    else {
+    } else {
         return true;
     }
-
 }
 
-fn get_latest_id_for_channel(chan_id: u64, pool: &Pool<ConnectionManager<SqliteConnection>>) -> u64 {
+fn get_latest_id_for_channel(
+    chan_id: u64,
+    pool: &Pool<ConnectionManager<SqliteConnection>>,
+) -> u64 {
     let conn = pool.get().unwrap();
 
     use schema::messages;
     use schema::messages::dsl::*;
 
-
     let mut chan_id_vec = messages::table
-    .order(id.desc())
-    .select(id)
-    .limit(1)
-    .filter(channel_id.eq(chan_id.to_string()))
-    .load::<Option<String>>(&conn)
-    .unwrap_or(vec![Some("0".to_owned()) ]);
+        .order(id.desc())
+        .select(id)
+        .limit(1)
+        .filter(channel_id.eq(chan_id.to_string()))
+        .load::<Option<String>>(&conn)
+        .unwrap_or(vec![Some("0".to_owned())]);
 
     if chan_id_vec.is_empty() {
         return 0;
     }
 
-    let latest_chan_id =  chan_id_vec.pop().unwrap().unwrap().parse::<u64>().unwrap_or(0);
-    
-    latest_chan_id
+    let latest_chan_id = chan_id_vec
+        .pop()
+        .unwrap()
+        .unwrap()
+        .parse::<u64>()
+        .unwrap_or(0);
 
+    latest_chan_id
 }
 
 pub fn insert_into_db(
@@ -154,25 +163,24 @@ pub fn insert_into_db(
     message_content: &String,
     message_timestamp: &String,
 ) {
+    use diesel;
     use models::*;
     use schema::messages;
-    use diesel;
 
     let conn = pool.get().unwrap();
 
     let vals = InsertableMessage {
-    id: message_id.to_string(),
-    channel_id: chan_id.to_string(),
-    author: message_author.to_string(),
-    content: message_content.to_string(),
-    timestamp: message_timestamp.to_string(),
+        id: message_id.to_string(),
+        channel_id: chan_id.to_string(),
+        author: message_author.to_string(),
+        content: message_content.to_string(),
+        timestamp: message_timestamp.to_string(),
     };
 
     let _ = diesel::replace_into(messages::table)
-    .values(&vals)
-    
-    .execute(&conn)
-    .expect("Error inserting values");
+        .values(&vals)
+        .execute(&conn)
+        .expect("Error inserting values");
 
     // let _ = conn.execute(
     //     "INSERT or REPLACE INTO messages (id, channel_id, author, content, timestamp) \

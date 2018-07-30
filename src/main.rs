@@ -4,26 +4,25 @@ extern crate diesel;
 #[macro_use]
 extern crate serenity;
 
-extern crate serde_yaml;
 extern crate markov;
 extern crate regex;
+extern crate serde_yaml;
 extern crate typemap;
 
-
+use std::collections::BTreeMap;
 use std::fs::File;
 use std::io::Read;
-use std::collections::BTreeMap;
 use typemap::Key;
 
-use serenity::prelude::*;
-use serenity::model::prelude::*;
 use serenity::framework::standard::*;
+use serenity::model::prelude::*;
+use serenity::prelude::*;
 
 use diesel::prelude::*;
 
 pub mod commands;
-pub mod schema;
 pub mod models;
+pub mod schema;
 
 pub type Pool = diesel::r2d2::Pool<diesel::r2d2::ConnectionManager<SqliteConnection>>;
 
@@ -127,23 +126,26 @@ fn main() {
 
     let manager = diesel::r2d2::ConnectionManager::new(dbname.to_string());
 
-    let pool = diesel::r2d2::Pool::builder().max_size(300).build(manager).unwrap();
+    let pool = diesel::r2d2::Pool::builder()
+        .max_size(300)
+        .build(manager)
+        .unwrap();
     let conn = pool.get().unwrap();
 
     use schema::messages;
 
     let def_vals = models::InsertableMessage {
-    id: "0".to_string(),
-    channel_id: "0".to_string(),
-    author: "0".to_string(),
-    content: "0".to_string(),
-    timestamp: "0".to_string(),
+        id: "0".to_string(),
+        channel_id: "0".to_string(),
+        author: "0".to_string(),
+        content: "0".to_string(),
+        timestamp: "0".to_string(),
     };
 
     let _ = diesel::insert_or_ignore_into(messages::table)
-    .values(&def_vals)
-    .execute(&conn)
-    .expect("Error inserting default values");
+        .values(&def_vals)
+        .execute(&conn)
+        .expect("Error inserting default values");
 
     println!("pre-init done");
 
