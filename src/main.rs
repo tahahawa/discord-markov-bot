@@ -19,6 +19,9 @@ use serenity::model::prelude::*;
 use serenity::prelude::*;
 
 use diesel::prelude::*;
+use diesel::r2d2::*;
+use models::*;
+use schema::messages;
 
 pub mod commands;
 pub mod models;
@@ -77,21 +80,23 @@ impl EventHandler for Handler {
         let mut data = _ctx.data.lock();
         let sql_pool = data.get_mut::<Sqlpool>().unwrap().clone();
 
-        commands::helper::download_all_messages(&guild, &sql_pool);
+        commands::helper::download_all_messages(&guild, &_ctx);
     }
 
     fn message(&self, _ctx: Context, message: Message) {
-        let mut data = _ctx.data.lock();
-        let sql_pool = data.get_mut::<Sqlpool>().unwrap().clone();
+        let mut message_vec = Vec::new();
 
-        commands::helper::insert_into_db(
-            &sql_pool,
-            &message.id.0.to_string(),
-            &message.channel_id.0.to_string(),
-            &message.author.id.0.to_string(),
-            &message.content,
-            &message.timestamp.to_string(),
-        );
+        let val = InsertableMessage {
+            id: message.id.0.to_string(),
+            channel_id: message.channel_id.0.to_string(),
+            author: message.author.id.0.to_string(),
+            content: message.content,
+            timestamp: message.timestamp.to_string(),
+        };
+
+        message_vec.push(val);
+
+        commands::helper::insert_into_db(&_ctx, &message_vec);
 
         //println!("added message on_message: {}", message.id.0.to_string());
     }
