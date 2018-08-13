@@ -19,9 +19,7 @@ use serenity::model::prelude::*;
 use serenity::prelude::*;
 
 use diesel::prelude::*;
-use diesel::r2d2::*;
 use models::*;
-use schema::messages;
 
 pub mod commands;
 pub mod models;
@@ -69,11 +67,6 @@ struct Handler;
 impl EventHandler for Handler {
     fn ready(&self, _ctx: Context, ready: Ready) {
         println!("{} is connected!", ready.user.name);
-        // println!("{:?}", ready.guilds);
-        //let mut data = _ctx.data.lock().unwrap();
-        //let sql_pool = data.get_mut::<Sqlpool>().unwrap().clone();
-
-        //download_all_messages(ready, sql_pool );
     }
 
     fn guild_create(&self, _ctx: Context, guild: Guild, _: bool) {

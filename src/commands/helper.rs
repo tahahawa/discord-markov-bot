@@ -179,16 +179,4 @@ pub fn insert_into_db(_ctx: &Context, message_vec: &Vec<InsertableMessage>) {
         .values(message_vec)
         .execute(&*conn)
         .expect("Error inserting values");
-
-    // let _ = conn.execute(
-    //     "INSERT or REPLACE INTO messages (id, channel_id, author, content, timestamp) \
-    //      VALUES (?1, ?2, ?3, ?4, ?5)",
-    //     &[
-    //         message_id,
-    //         (channel_id),
-    //         (message_author),
-    //         message_content,
-    //         message_timestamp,
-    //     ],
-    // );
 }
