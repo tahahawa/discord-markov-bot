@@ -1,24 +1,18 @@
 use diesel;
 use diesel::prelude::*;
-// use diesel::r2d2::*;
 use models::*;
 use schema::messages;
 use serenity::model::prelude::*;
 use serenity::client::Context;
-// use serenity;
-use typemap::Key;
 
-pub type Pool = diesel::r2d2::Pool<diesel::r2d2::ConnectionManager<SqliteConnection>>;
+use Sqlpool;
 
-pub struct Sqlpool;
-
-impl Key for Sqlpool {
-    type Value = Pool;
-}
 
 
 pub fn download_all_messages(guild: &Guild, _ctx: &Context) {
-    for chan in guild.channels().unwrap() {
+    let channels = guild.channels().expect("Channels not found");
+
+    for chan in channels {
         let mut _messages = Vec::new();
         let channel_id = (chan.0).0;
 
@@ -37,7 +31,7 @@ pub fn download_all_messages(guild: &Guild, _ctx: &Context) {
             continue;
         }
 
-        let biggest_id = biggest_id.unwrap().0;
+        let biggest_id = biggest_id.expect("Biggest ID = None").0;
         //println!("biggest ID: {}", biggest_id);
 
         if biggest_id_exists_in_db(biggest_id, _ctx) {
@@ -124,6 +118,8 @@ fn biggest_id_exists_in_db(biggest_id: u64, _ctx: &Context) -> bool {
 
     let conn = sql_pool.get().unwrap();
 
+    drop(data);
+    
     use schema::messages;
     use schema::messages::dsl::*;
 
@@ -181,7 +177,7 @@ pub fn insert_into_db(_ctx: &Context, message_vec: &Vec<InsertableMessage>) {
 
     let _ = diesel::replace_into(messages::table)
         .values(message_vec)
-        .execute(&conn)
+        .execute(&*conn)
         .expect("Error inserting values");
 
     // let _ = conn.execute(

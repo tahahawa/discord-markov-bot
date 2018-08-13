@@ -77,9 +77,6 @@ impl EventHandler for Handler {
     }
 
     fn guild_create(&self, _ctx: Context, guild: Guild, _: bool) {
-        let mut data = _ctx.data.lock();
-        let sql_pool = data.get_mut::<Sqlpool>().unwrap().clone();
-
         commands::helper::download_all_messages(&guild, &_ctx);
     }
 
@@ -191,7 +188,6 @@ fn main() {
         data.insert::<Sqlpool>(pool.clone());
     }
 
-    // start listening for events by starting a single shard
     if let Err(why) = client.start_autosharded() {
         println!("Client error: {:?}", why);
     }
