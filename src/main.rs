@@ -66,6 +66,7 @@ struct Handler;
 
 impl EventHandler for Handler {
     fn ready(&self, _ctx: Context, ready: Ready) {
+        println!("Version {} of markovbot", env!("CARGO_PKG_VERSION"));
         println!("{} is connected!", ready.user.name);
     }
 
