@@ -1,9 +1,18 @@
+use diesel;
 use diesel::prelude::*;
-use diesel::r2d2::*;
+use models::*;
+use schema::messages;
 use serenity::model::prelude::*;
+use serenity::client::Context;
 
-pub fn download_all_messages(guild: &Guild, pool: &Pool<ConnectionManager<SqliteConnection>>) {
-    for chan in guild.channels().unwrap() {
+use Sqlpool;
+
+
+
+pub fn download_all_messages(guild: &Guild, _ctx: &Context) {
+    let channels = guild.channels().expect("Channels not found");
+
+    for chan in channels {
         let mut _messages = Vec::new();
         let channel_id = (chan.0).0;
 
@@ -22,14 +31,14 @@ pub fn download_all_messages(guild: &Guild, pool: &Pool<ConnectionManager<Sqlite
             continue;
         }
 
-        let biggest_id = biggest_id.unwrap().0;
+        let biggest_id = biggest_id.expect("Biggest ID = None").0;
         //println!("biggest ID: {}", biggest_id);
 
-        if biggest_id_exists_in_db(biggest_id, pool) {
+        if biggest_id_exists_in_db(biggest_id, _ctx) {
             continue;
         }
 
-        let id = get_latest_id_for_channel(channel_id, pool);
+        let id = get_latest_id_for_channel(channel_id, _ctx);
 
         if id == 0 {
             //println!("no message ID");
@@ -58,20 +67,23 @@ pub fn download_all_messages(guild: &Guild, pool: &Pool<ConnectionManager<Sqlite
                 guild.name
             );
             let message_vec = _messages.to_vec();
+            let mut transformed_message_vec = Vec::new();
             for message in message_vec {
-                insert_into_db(
-                    pool,
-                    &message.id.0.to_string(),
-                    &message.channel_id.0.to_string(),
-                    &message.author.id.0.to_string(),
-                    &message.content,
-                    &message.timestamp.to_string(),
-                );
+                let vals = InsertableMessage{
+                    id: message.id.0.to_string(),
+                    channel_id: message.channel_id.0.to_string(),
+                    author: message.author.id.0.to_string(),
+                    content: message.content,
+                    timestamp: message.timestamp.to_string(),
+            };
 
+                transformed_message_vec.push(vals);
                 //println!("{:?}", message);
             }
 
-            let id2 = get_latest_id_for_channel(channel_id, pool);
+            insert_into_db(_ctx, &transformed_message_vec);
+
+            let id2 = get_latest_id_for_channel(channel_id, _ctx);
 
             if id2 == 0 {
                 //println!("no message ID");
@@ -100,12 +112,14 @@ pub fn download_all_messages(guild: &Guild, pool: &Pool<ConnectionManager<Sqlite
     println!("Downloaded all messages for {:?}", guild.name);
 }
 
-fn biggest_id_exists_in_db(
-    biggest_id: u64,
-    pool: &Pool<ConnectionManager<SqliteConnection>>,
-) -> bool {
-    let conn = pool.get().unwrap();
+fn biggest_id_exists_in_db(biggest_id: u64, _ctx: &Context) -> bool {
+    let mut data = _ctx.data.lock();
+    let sql_pool = data.get_mut::<Sqlpool>().unwrap().clone();
 
+    let conn = sql_pool.get().unwrap();
+
+    drop(data);
+    
     use schema::messages;
     use schema::messages::dsl::*;
 
@@ -124,11 +138,11 @@ fn biggest_id_exists_in_db(
     }
 }
 
-fn get_latest_id_for_channel(
-    chan_id: u64,
-    pool: &Pool<ConnectionManager<SqliteConnection>>,
-) -> u64 {
-    let conn = pool.get().unwrap();
+fn get_latest_id_for_channel(chan_id: u64, _ctx: &Context) -> u64 {
+    let mut data = _ctx.data.lock();
+    let sql_pool = data.get_mut::<Sqlpool>().unwrap().clone();
+
+    let conn = sql_pool.get().unwrap();
 
     use schema::messages;
     use schema::messages::dsl::*;
@@ -155,42 +169,14 @@ fn get_latest_id_for_channel(
     latest_chan_id
 }
 
-pub fn insert_into_db(
-    pool: &Pool<ConnectionManager<SqliteConnection>>,
-    message_id: &String,
-    chan_id: &String,
-    message_author: &String,
-    message_content: &String,
-    message_timestamp: &String,
-) {
-    use diesel;
-    use models::*;
-    use schema::messages;
+pub fn insert_into_db(_ctx: &Context, message_vec: &Vec<InsertableMessage>) {
+    let mut data = _ctx.data.lock();
+    let sql_pool = data.get_mut::<Sqlpool>().unwrap().clone();
 
-    let conn = pool.get().unwrap();
-
-    let vals = InsertableMessage {
-        id: message_id.to_string(),
-        channel_id: chan_id.to_string(),
-        author: message_author.to_string(),
-        content: message_content.to_string(),
-        timestamp: message_timestamp.to_string(),
-    };
+    let conn = sql_pool.get().unwrap();
 
     let _ = diesel::replace_into(messages::table)
-        .values(&vals)
-        .execute(&conn)
+        .values(message_vec)
+        .execute(&*conn)
         .expect("Error inserting values");
-
-    // let _ = conn.execute(
-    //     "INSERT or REPLACE INTO messages (id, channel_id, author, content, timestamp) \
-    //      VALUES (?1, ?2, ?3, ?4, ?5)",
-    //     &[
-    //         message_id,
-    //         (channel_id),
-    //         (message_author),
-    //         message_content,
-    //         message_timestamp,
-    //     ],
-    // );
 }
