@@ -4,10 +4,15 @@ extern crate diesel;
 #[macro_use]
 extern crate serenity;
 
+extern crate num;
+extern crate bigdecimal;
+
 extern crate markov;
 extern crate regex;
 extern crate serde_yaml;
 extern crate typemap;
+
+extern crate chrono;
 
 use std::collections::BTreeMap;
 use std::fs::File;
@@ -18,9 +23,10 @@ use serenity::framework::standard::*;
 use serenity::model::prelude::*;
 use serenity::prelude::*;
 
-use diesel::prelude::*;
 use diesel::pg::PgConnection;
+use diesel::prelude::*;
 use models::*;
+use chrono::*;
 
 pub mod commands;
 pub mod models;
@@ -79,11 +85,11 @@ impl EventHandler for Handler {
         let mut message_vec = Vec::new();
 
         let val = InsertableMessage {
-            id: message.id.0.to_string(),
-            channel_id: message.channel_id.0.to_string(),
-            author: message.author.id.0.to_string(),
+            id: message.id.0 as i64,
+            channel_id: message.channel_id.0 as i64,
+            author: message.author.id.0 as i64,
             content: message.content,
-            timestamp: message.timestamp.to_string(),
+            timestamp: message.timestamp,
         };
 
         message_vec.push(val);
@@ -132,13 +138,12 @@ fn main() {
     use schema::messages;
 
     let def_vals = models::InsertableMessage {
-        id: "0".to_string(),
-        channel_id: "0".to_string(),
-        author: "0".to_string(),
-        content: "0".to_string(),
-        timestamp: "0".to_string(),
+        id: 0,
+        channel_id: 0,
+        author: 0,
+        content: "0".to_owned(),
+        timestamp: DateTime::parse_from_rfc3339("2014-11-28T21:00:09+09:00").unwrap(),
     };
-
 
     let _ = diesel::insert_into(messages::table)
         .values(&def_vals)

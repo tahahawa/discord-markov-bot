@@ -60,7 +60,7 @@ pub fn impersonate(
 
         let results = messages
             .select(content)
-            .filter(author.eq(user.id.0.to_string()))
+            .filter(author.eq(user.id.0 as i64))
             .filter(not(content.like("%~hivemind%")))
             .filter(not(content.like("%~impersonate%")))
             .filter(not(content.like("%~ping%")))

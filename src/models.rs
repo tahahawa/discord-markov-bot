@@ -1,12 +1,13 @@
 use super::schema::messages;
+use chrono::*;
 
-#[derive(Queryable, Insertable)]
+#[derive(Queryable, Insertable, Debug)]
 #[table_name = "messages"]
 
-pub struct InsertableMessage {
-    pub id: String,
-    pub channel_id: String,
-    pub author: String,
+pub struct InsertableMessage<Tz: TimeZone> {
+    pub id: i64,
+    pub channel_id: i64,
+    pub author: i64,
     pub content: String,
-    pub timestamp: String,
+    pub timestamp: DateTime<Tz>,
 }
