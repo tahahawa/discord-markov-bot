@@ -124,7 +124,7 @@ fn main() {
     let manager = diesel::r2d2::ConnectionManager::<PgConnection>::new(dbname.to_string());
 
     let pool = diesel::r2d2::Pool::builder()
-        .max_size(300)
+        .max_size(120)
         .build(manager)
         .expect(&format!("Error connecting to {}", dbname.to_string()));
     let conn = pool.get().unwrap();
