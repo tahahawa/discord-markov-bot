@@ -4,6 +4,7 @@ use models::*;
 use schema::messages;
 use serenity::model::prelude::*;
 use serenity::client::Context;
+use diesel::pg::upsert::excluded;
 
 use Sqlpool;
 
@@ -177,13 +178,20 @@ fn get_latest_id_for_channel(chan_id: u64, _ctx: &Context) -> u64 {
 }
 
 pub fn insert_into_db(_ctx: &Context, message_vec: &Vec<InsertableMessage>) {
+    let conn;
+    
+    {
     let mut data = _ctx.data.lock();
     let sql_pool = data.get_mut::<Sqlpool>().unwrap().clone();
+    
+    conn = sql_pool.get().unwrap();
+    }
 
-    let conn = sql_pool.get().unwrap();
-
-    let _ = diesel::replace_into(messages::table)
+    let _ = diesel::insert_into(messages::table)
         .values(message_vec)
-        .execute(&*conn)
+        .on_conflict(messages::id)
+        .do_update()
+        .set(messages::content.eq(excluded(messages::content)))
+        .execute(&conn)
         .expect("Error inserting values");
 }
