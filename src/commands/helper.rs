@@ -113,12 +113,15 @@ pub fn download_all_messages(guild: &Guild, _ctx: &Context) {
 }
 
 fn biggest_id_exists_in_db(biggest_id: u64, _ctx: &Context) -> bool {
+    let conn;
+
+    {
     let mut data = _ctx.data.lock();
     let sql_pool = data.get_mut::<Sqlpool>().unwrap().clone();
+    
+    conn = sql_pool.get().unwrap();
+    }
 
-    let conn = sql_pool.get().unwrap();
-
-    drop(data);
     
     use schema::messages;
     use schema::messages::dsl::*;
@@ -139,10 +142,14 @@ fn biggest_id_exists_in_db(biggest_id: u64, _ctx: &Context) -> bool {
 }
 
 fn get_latest_id_for_channel(chan_id: u64, _ctx: &Context) -> u64 {
+    let conn;
+    
+    {
     let mut data = _ctx.data.lock();
     let sql_pool = data.get_mut::<Sqlpool>().unwrap().clone();
-
-    let conn = sql_pool.get().unwrap();
+    
+    conn = sql_pool.get().unwrap();
+    }
 
     use schema::messages;
     use schema::messages::dsl::*;
