@@ -5,6 +5,7 @@ use schema::messages;
 use serenity::model::prelude::*;
 use serenity::client::Context;
 use diesel::pg::upsert::excluded;
+use chrono::*;
 
 use Sqlpool;
 
@@ -15,7 +16,7 @@ pub fn download_all_messages(guild: &Guild, _ctx: &Context) {
 
     for chan in channels {
         let mut _messages = Vec::new();
-        let channel_id = (chan.0).0;
+        let channel_id = (chan.0).0 as i64;
 
         println!("{:?}", chan.1.name);
         println!();
@@ -32,7 +33,7 @@ pub fn download_all_messages(guild: &Guild, _ctx: &Context) {
             continue;
         }
 
-        let biggest_id = biggest_id.expect("Biggest ID = None").0;
+        let biggest_id = biggest_id.expect("Biggest ID = None").0 as i64;
         //println!("biggest ID: {}", biggest_id);
 
         if biggest_id_exists_in_db(biggest_id, _ctx) {
@@ -71,11 +72,11 @@ pub fn download_all_messages(guild: &Guild, _ctx: &Context) {
             let mut transformed_message_vec = Vec::new();
             for message in message_vec {
                 let vals = InsertableMessage{
-                    id: message.id.0.to_string(),
-                    channel_id: message.channel_id.0.to_string(),
-                    author: message.author.id.0.to_string(),
+                    id: message.id.0 as i64,
+                    channel_id: message.channel_id.0 as i64,
+                    author: message.author.id.0 as i64,
                     content: message.content,
-                    timestamp: message.timestamp.to_string(),
+                    timestamp: message.timestamp,
             };
 
                 transformed_message_vec.push(vals);
@@ -113,7 +114,7 @@ pub fn download_all_messages(guild: &Guild, _ctx: &Context) {
     println!("Downloaded all messages for {:?}", guild.name);
 }
 
-fn biggest_id_exists_in_db(biggest_id: u64, _ctx: &Context) -> bool {
+fn biggest_id_exists_in_db(biggest_id: i64, _ctx: &Context) -> bool {
     let conn;
 
     {
@@ -131,8 +132,8 @@ fn biggest_id_exists_in_db(biggest_id: u64, _ctx: &Context) -> bool {
         .order(id.desc())
         .select(id)
         .limit(1)
-        .filter(id.eq(biggest_id.to_string()))
-        .load::<Option<String>>(&conn)
+        .filter(id.eq(biggest_id as i64))
+        .load::<Option<i64>>(&conn)
         .expect("Error loading biggest id");
 
     if biggest_id_db_vec.is_empty() {
@@ -142,7 +143,7 @@ fn biggest_id_exists_in_db(biggest_id: u64, _ctx: &Context) -> bool {
     }
 }
 
-fn get_latest_id_for_channel(chan_id: u64, _ctx: &Context) -> u64 {
+fn get_latest_id_for_channel(chan_id: i64, _ctx: &Context) -> i64 {
     let conn;
     
     {
@@ -159,9 +160,9 @@ fn get_latest_id_for_channel(chan_id: u64, _ctx: &Context) -> u64 {
         .order(id.desc())
         .select(id)
         .limit(1)
-        .filter(channel_id.eq(chan_id.to_string()))
-        .load::<Option<String>>(&conn)
-        .unwrap_or(vec![Some("0".to_owned())]);
+        .filter(channel_id.eq(chan_id as i64))
+        .load::<Option<i64>>(&conn)
+        .unwrap_or(vec![Some(0)]);
 
     if chan_id_vec.is_empty() {
         return 0;
@@ -170,14 +171,12 @@ fn get_latest_id_for_channel(chan_id: u64, _ctx: &Context) -> u64 {
     let latest_chan_id = chan_id_vec
         .pop()
         .unwrap()
-        .unwrap()
-        .parse::<u64>()
         .unwrap_or(0);
 
     latest_chan_id
 }
 
-pub fn insert_into_db(_ctx: &Context, message_vec: &Vec<InsertableMessage>) {
+pub fn insert_into_db(_ctx: &Context, message_vec: &Vec<InsertableMessage<FixedOffset>>) {
     let conn;
     
     {
