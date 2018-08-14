@@ -8,3 +8,4 @@ config.yaml
 *.bk
 *.fmt
 config.yaml.bak
+config.yaml.testing
