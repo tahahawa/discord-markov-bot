@@ -42,10 +42,14 @@ pub fn impersonate(
 
     let user = member.map(|m| m.user.read());
 
-    let data = _context.data.lock();
-    let pool = data.get::<Sqlpool>().unwrap().clone();
-    let conn = pool.get().unwrap();
-    drop(data);
+    let conn;
+    
+    {
+    let mut data = _context.data.lock();
+    let sql_pool = data.get_mut::<Sqlpool>().unwrap().clone();
+    
+    conn = sql_pool.get().unwrap();
+    }
 
     if let Some(user) = user {
         let mut chain: Chain<String> = Chain::new();

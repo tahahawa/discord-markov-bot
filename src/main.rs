@@ -19,13 +19,14 @@ use serenity::model::prelude::*;
 use serenity::prelude::*;
 
 use diesel::prelude::*;
+use diesel::pg::PgConnection;
 use models::*;
 
 pub mod commands;
 pub mod models;
 pub mod schema;
 
-pub type Pool = diesel::r2d2::Pool<diesel::r2d2::ConnectionManager<SqliteConnection>>;
+pub type Pool = diesel::r2d2::Pool<diesel::r2d2::ConnectionManager<PgConnection>>;
 
 pub struct Sqlpool;
 
@@ -120,12 +121,12 @@ fn main() {
 
     let dbname = config["db"].clone();
 
-    let manager = diesel::r2d2::ConnectionManager::new(dbname.to_string());
+    let manager = diesel::r2d2::ConnectionManager::<PgConnection>::new(dbname.to_string());
 
     let pool = diesel::r2d2::Pool::builder()
         .max_size(300)
         .build(manager)
-        .unwrap();
+        .expect(&format!("Error connecting to {}", dbname.to_string()));
     let conn = pool.get().unwrap();
 
     use schema::messages;
@@ -138,8 +139,10 @@ fn main() {
         timestamp: "0".to_string(),
     };
 
-    let _ = diesel::insert_or_ignore_into(messages::table)
+
+    let _ = diesel::insert_into(messages::table)
         .values(&def_vals)
+        .on_conflict_do_nothing()
         .execute(&conn)
         .expect("Error inserting default values");
 
