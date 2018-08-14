@@ -1,6 +1,6 @@
 [package]
 name = "discord-markov-bot"
-version = "0.4.2"
+version = "0.5.0"
 authors = ["Taha Hawa <tahahawa@gmail.com>"]
 
 [dependencies]
