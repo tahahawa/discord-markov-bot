@@ -136,11 +136,7 @@ fn biggest_id_exists_in_db(biggest_id: i64, _ctx: &Context) -> bool {
         .load::<Option<i64>>(&conn)
         .expect("Error loading biggest id");
 
-    if biggest_id_db_vec.is_empty() {
-        return false;
-    } else {
-        return true;
-    }
+    !biggest_id_db_vec.is_empty()
 }
 
 fn get_latest_id_for_channel(chan_id: i64, _ctx: &Context) -> i64 {
@@ -154,7 +150,7 @@ fn get_latest_id_for_channel(chan_id: i64, _ctx: &Context) -> i64 {
     }
 
     use schema::messages;
-    use schema::messages::dsl::*;
+    use schema::messages::dsl::{channel_id, id};
 
     let mut chan_id_vec = messages::table
         .order(id.desc())
@@ -162,21 +158,20 @@ fn get_latest_id_for_channel(chan_id: i64, _ctx: &Context) -> i64 {
         .limit(1)
         .filter(channel_id.eq(chan_id as i64))
         .load::<Option<i64>>(&conn)
-        .unwrap_or(vec![Some(0)]);
+        .unwrap_or_default();
 
     if chan_id_vec.is_empty() {
         return 0;
     }
 
-    let latest_chan_id = chan_id_vec
+    chan_id_vec
         .pop()
         .unwrap()
-        .unwrap_or(0);
+        .unwrap_or(0)
 
-    latest_chan_id
 }
 
-pub fn insert_into_db(_ctx: &Context, message_vec: &Vec<InsertableMessage<FixedOffset>>) {
+pub fn insert_into_db(_ctx: &Context, message_vec: &[InsertableMessage<FixedOffset>]) {
     let conn;
     
     {

@@ -132,7 +132,8 @@ fn main() {
     let pool = diesel::r2d2::Pool::builder()
         .max_size(120)
         .build(manager)
-        .expect(&format!("Error connecting to {}", dbname.to_string()));
+        .unwrap_or_else(|_| panic!("Error connecting to {}", dbname.to_string()));
+        
     let conn = pool.get().unwrap();
 
     use schema::messages;
