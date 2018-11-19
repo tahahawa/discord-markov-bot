@@ -17,6 +17,9 @@ chrono = "0.4.5"
 [dependencies.serenity]
 git = "https://github.com/serenity-rs/serenity.git"
 # git = "https://github.com/tahahawa/serenity.git"
-#branch = "feature/tungstenite-switch"
+branch = "current"
 default-features = false
 features = ["cache", "framework", "builder", "client", "utils", "model", "standard_framework"]
+
+[patch.crates-io]
+openssl = { git = "https://github.com/ishitatsuyuki/rust-openssl", branch = "0.9.x" }
