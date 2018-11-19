@@ -8,7 +8,6 @@ extern crate num;
 extern crate bigdecimal;
 
 extern crate markov;
-extern crate regex;
 extern crate serde_yaml;
 extern crate typemap;
 
@@ -51,7 +50,7 @@ command!(stats(_ctx, msg, _args){
         let mut guild_names: Vec<String> = Vec::new();
 
         for (id, _) in cache.clone().guilds {
-            guild_names.push(id.get().unwrap().name);
+            guild_names.push(id.to_partial_guild().unwrap().name);
         }
 
         println!("guilds: {:?}; channels: {}; users: {}", 
@@ -132,7 +131,8 @@ fn main() {
     let pool = diesel::r2d2::Pool::builder()
         .max_size(120)
         .build(manager)
-        .expect(&format!("Error connecting to {}", dbname.to_string()));
+        .unwrap_or_else(|_| panic!("Error connecting to {}", dbname.to_string()));
+        
     let conn = pool.get().unwrap();
 
     use schema::messages;

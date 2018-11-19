@@ -1,6 +1,6 @@
 -- Your SQL goes here 
 CREATE TABLE IF NOT EXISTS messages (
-                  id Int8 PRIMARY KEY,
+                  id Int8 UNIQUE PRIMARY KEY,
                   channel_id Int8 NOT NULL,
                   author Int8 NOT NULL,
                   content TEXT NOT NULL,

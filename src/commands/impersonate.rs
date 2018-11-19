@@ -1,11 +1,14 @@
 use diesel::dsl::*;
 use diesel::prelude::*;
 use markov::Chain;
-use regex::Regex;
 use serenity::framework::standard::*;
 use serenity::model::prelude::*;
 use serenity::prelude::*;
 use Sqlpool;
+use serenity::utils::{
+    content_safe,
+    ContentSafeOptions,
+};
 
 enum IdOrUsername {
     Id(u64),
@@ -30,7 +33,6 @@ pub fn impersonate(
 
     let _ = message.channel_id.broadcast_typing();
 
-    let re = Regex::new(r"(<@!?\d*>)").unwrap();
 
     let guild_arc = message.guild().unwrap();
     let guild = guild_arc.read();
@@ -81,7 +83,6 @@ pub fn impersonate(
                 chain.feed_str(&m);
             }
 
-            // let re_iter = Regex::new(r"\D").unwrap();
             // let iter_test = re_iter.replace_all(&count, "");
 
             // let iter: usize = iter_test.parse::<usize>().unwrap_or(1);
@@ -89,7 +90,7 @@ pub fn impersonate(
             for line in chain.str_iter_for(count) {
                 let _ = message
                     .channel_id
-                    .say(&re.replace_all(&line, "@mention").into_owned());
+                .say(content_safe(&line, &ContentSafeOptions::default()));
                 //println!("{}", line);
                 let _ = message.channel_id.broadcast_typing();
             }
