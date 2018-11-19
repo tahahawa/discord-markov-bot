@@ -1,11 +1,14 @@
 use diesel::dsl::*;
 use diesel::prelude::*;
 use markov::Chain;
-use regex::Regex;
 use serenity::framework::standard::*;
 use serenity::model::prelude::*;
 use serenity::prelude::*;
 use Sqlpool;
+use serenity::utils::{
+    content_safe,
+    ContentSafeOptions,
+};
 
 pub fn hivemind(
     _context: &mut Context,
@@ -13,8 +16,6 @@ pub fn hivemind(
     mut args: Args,
 ) -> Result<(), CommandError> {
     let _ = message.channel_id.broadcast_typing();
-
-    let re = Regex::new(r"(<@!?\d*>)").unwrap();
 
     println!("args: {:?}", args);
 
@@ -56,7 +57,7 @@ pub fn hivemind(
         for line in chain.str_iter_for(count) {
             let _ = message
                 .channel_id
-                .say(&re.replace_all(&line, "@mention").into_owned());
+                .say(content_safe(&line, &ContentSafeOptions::default()));
             //println!("{}", line);
             let _ = message.channel_id.broadcast_typing();
         }

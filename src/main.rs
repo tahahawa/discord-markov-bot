@@ -8,7 +8,6 @@ extern crate num;
 extern crate bigdecimal;
 
 extern crate markov;
-extern crate regex;
 extern crate serde_yaml;
 extern crate typemap;
 
