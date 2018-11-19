@@ -50,7 +50,7 @@ command!(stats(_ctx, msg, _args){
         let mut guild_names: Vec<String> = Vec::new();
 
         for (id, _) in cache.clone().guilds {
-            guild_names.push(id.get().unwrap().name);
+            guild_names.push(id.to_partial_guild().unwrap().name);
         }
 
         println!("guilds: {:?}; channels: {}; users: {}", 
