@@ -75,16 +75,27 @@ pub fn impersonate(
         // }
 
         if !results.is_empty() {
+            let mut i = 0;
+            let len = results.len();
+
             for m in results {
                 trace!("Feeding message '{}' into chain", m);
                 chain.feed_str(&m);
 
-                let _ = message.channel_id.broadcast_typing();
+                if i == len / 4 {
+                    let _ = message.channel_id.broadcast_typing();
+                    i = 0;
+                } else {
+                    i += 1;
+                }
+
             }
 
             // let iter_test = re_iter.replace_all(&count, "");
 
             // let iter: usize = iter_test.parse::<usize>().unwrap_or(1);
+
+            let _ = message.channel_id.broadcast_typing();
 
             for line in chain.str_iter_for(count) {
                 trace!("Outgoing message: '{}'", line);
