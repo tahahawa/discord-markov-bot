@@ -4,6 +4,11 @@ extern crate diesel;
 #[macro_use]
 extern crate serenity;
 
+#[macro_use]
+extern crate log;
+
+extern crate pretty_env_logger;
+
 extern crate num;
 extern crate bigdecimal;
 
@@ -72,9 +77,17 @@ struct Handler;
 
 impl EventHandler for Handler {
     fn ready(&self, _ctx: Context, ready: Ready) {
-        println!("Version {} of markovbot", env!("CARGO_PKG_VERSION"));
-        println!("{} is connected!", ready.user.name);
-    }
+        info!("Version {} of markovbot", env!("CARGO_PKG_VERSION"));
+        info!("{} is connected!", ready.user.name);
+     }
+
+        fn resume(&self, _: Context, resume: ResumedEvent) {
+        // Log at the DEBUG level.
+        //
+        // In this example, this will not show up in the logs because DEBUG is
+        // below INFO, which is the set debug level.
+        debug!("Resumed; trace: {:?}", resume.trace);
+}
 
     fn guild_create(&self, _ctx: Context, guild: Guild, _: bool) {
         commands::helper::download_all_messages(&guild, &_ctx);
@@ -118,6 +131,9 @@ impl EventHandler for Handler {
 }
 
 fn main() {
+
+    pretty_env_logger::init();
+
     let mut f = File::open("config.yaml").unwrap();
     let mut fstr = String::new();
     let _ = f.read_to_string(&mut fstr);
@@ -159,11 +175,12 @@ fn main() {
             .configure(|c| c.prefix("~")) // set the bot's prefix to "~"
             .on_dispatch_error(|_ctx, msg, error| {
                 if let DispatchError::RateLimited(seconds) = error {
+                    info!("Hivemind cooldown for {} more seconds", seconds);
                     let _ = msg.channel_id.say(&format!("Try this again in {} seconds.", seconds));
                 }
             })
             .before(|_, msg, command_name| {
-                println!("Got command '{}' by user '{}'",
+                info!("Got command '{}' by user '{}'",
                          command_name,
                          msg.author.name);
                 true
