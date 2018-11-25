@@ -20,7 +20,7 @@ pub fn impersonate(
     message: &Message,
     mut args: Args,
 ) -> Result<(), CommandError> {
-    println!("args: {:?}", args);
+    debug!("args: {:?}", args);
 
     let fetch_from = match args.single::<u64>() {
         Ok(id) => IdOrUsername::Id(id),
@@ -95,6 +95,7 @@ pub fn impersonate(
                 let _ = message.channel_id.broadcast_typing();
             }
         } else {
+            info!("Requested command has no data available");
             let _ = message.reply("They haven't said anything");
         }
     // } else if user.is_some() {
@@ -123,6 +124,7 @@ pub fn impersonate(
     //         let _ = message.reply("They haven't said anything");
     //     }
     } else {
+        info!("User not found");
         let _ = message.reply("No user found");
     }
     Ok(())

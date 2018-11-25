@@ -18,9 +18,7 @@ pub fn download_all_messages(guild: &Guild, _ctx: &Context) {
         let mut _messages = Vec::new();
         let channel_id = (chan.0).0 as i64;
 
-        println!("{:?}", chan.1.name);
-        println!();
-        println!();
+        info!("{:?}", chan.1.name);
 
         if chan.1.bitrate != None {
             continue;
@@ -29,7 +27,7 @@ pub fn download_all_messages(guild: &Guild, _ctx: &Context) {
         let biggest_id = chan.1.last_message_id;
 
         if biggest_id == None {
-            println!("skipped, no latest message exists");
+            info!("skipped, no latest message exists");
             continue;
         }
 
@@ -46,7 +44,7 @@ pub fn download_all_messages(guild: &Guild, _ctx: &Context) {
             //println!("no message ID");
             let try = chan.0.messages(|g| g.after(0).limit(100));
             match try {
-                Err(_) => println!("error getting messages"),
+                Err(_) => warn!("error getting messages"),
                 _ => _messages = try.unwrap(),
             }
         } else {
@@ -55,14 +53,14 @@ pub fn download_all_messages(guild: &Guild, _ctx: &Context) {
                 .messages(|g| g.after(MessageId(id as u64)).limit(100));
 
             match try {
-                Err(_) => println!("error getting messages"),
+                Err(_) => warn!("error getting messages"),
                 _ => _messages = try.unwrap(),
             }
         }
 
         while !_messages.is_empty() {
             let _ = chan.0.broadcast_typing();
-            println!(
+            info!(
                 "storing {} messages from #{} on {}",
                 _messages.len(),
                 chan.1.name,
@@ -91,7 +89,7 @@ pub fn download_all_messages(guild: &Guild, _ctx: &Context) {
                 //println!("no message ID");
                 let try = chan.0.messages(|g| g.after(0).limit(100));
                 match try {
-                    Err(_) => println!("error getting messages"),
+                    Err(_) => warn!("error getting messages"),
                     _ => _messages = try.unwrap(),
                 }
             } else if id2 >= biggest_id {
@@ -102,7 +100,7 @@ pub fn download_all_messages(guild: &Guild, _ctx: &Context) {
                     .messages(|g| g.after(MessageId(id2 as u64)).limit(100));
 
                 match try {
-                    Err(_) => println!("error getting messages"),
+                    Err(_) => warn!("error getting messages"),
                     _ => _messages = try.unwrap(),
                 }
 
@@ -111,7 +109,7 @@ pub fn download_all_messages(guild: &Guild, _ctx: &Context) {
             }
         }
     }
-    println!("Downloaded all messages for {:?}", guild.name);
+    info!("Downloaded all messages for {:?}", guild.name);
 }
 
 fn biggest_id_exists_in_db(biggest_id: i64, _ctx: &Context) -> bool {

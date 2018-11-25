@@ -17,7 +17,7 @@ pub fn hivemind(
 ) -> Result<(), CommandError> {
     let _ = message.channel_id.broadcast_typing();
 
-    println!("args: {:?}", args);
+    debug!("args: {:?}", args);
 
     let count: usize = args.single_quoted().unwrap_or(1);
 
@@ -62,6 +62,7 @@ pub fn hivemind(
             let _ = message.channel_id.broadcast_typing();
         }
     } else {
+        info!("Requested command has no data available");
         let _ = message.reply("They haven't said anything");
     }
     Ok(())
