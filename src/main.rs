@@ -9,8 +9,8 @@ extern crate log;
 
 extern crate pretty_env_logger;
 
-extern crate num;
 extern crate bigdecimal;
+extern crate num;
 
 extern crate markov;
 extern crate serde_yaml;
@@ -27,10 +27,10 @@ use serenity::framework::standard::*;
 use serenity::model::prelude::*;
 use serenity::prelude::*;
 
+use chrono::*;
 use diesel::pg::PgConnection;
 use diesel::prelude::*;
 use models::*;
-use chrono::*;
 
 pub mod commands;
 pub mod models;
@@ -46,7 +46,7 @@ impl Key for Sqlpool {
 
 command!(ping(_ctx, msg, _args){
     if let Err(why) = msg.channel_id.say("Pong!") {
-        println!("Error sending message: {:?}", why);
+        warn!("Error sending message: {:?}", why);
     }
 });
 
@@ -58,7 +58,7 @@ command!(stats(_ctx, msg, _args){
             guild_names.push(id.to_partial_guild().unwrap().name);
         }
 
-        println!("guilds: {:?}; channels: {}; users: {}", 
+        info!("guilds: {:?}; channels: {}; users: {}", 
         guild_names,
         cache.channels.len(),
         cache.users.len());
@@ -69,7 +69,7 @@ command!(stats(_ctx, msg, _args){
             guild_names,
             cache.channels.len(),
             cache.users.len())){
-                println!("Error sending message: {:?}", why);
+                info!("Error sending message: {:?}", why);
                 };
 });
 
@@ -79,15 +79,15 @@ impl EventHandler for Handler {
     fn ready(&self, _ctx: Context, ready: Ready) {
         info!("Version {} of markovbot", env!("CARGO_PKG_VERSION"));
         info!("{} is connected!", ready.user.name);
-     }
+    }
 
-        fn resume(&self, _: Context, resume: ResumedEvent) {
+    fn resume(&self, _: Context, resume: ResumedEvent) {
         // Log at the DEBUG level.
         //
         // In this example, this will not show up in the logs because DEBUG is
         // below INFO, which is the set debug level.
         debug!("Resumed; trace: {:?}", resume.trace);
-}
+    }
 
     fn guild_create(&self, _ctx: Context, guild: Guild, _: bool) {
         commands::helper::download_all_messages(&guild, &_ctx);
@@ -131,7 +131,6 @@ impl EventHandler for Handler {
 }
 
 fn main() {
-
     pretty_env_logger::init();
 
     let mut f = File::open("config.yaml").unwrap();
@@ -148,7 +147,7 @@ fn main() {
         .max_size(120)
         .build(manager)
         .unwrap_or_else(|_| panic!("Error connecting to {}", dbname.to_string()));
-        
+
     let conn = pool.get().unwrap();
 
     use schema::messages;
@@ -167,7 +166,7 @@ fn main() {
         .execute(&conn)
         .expect("Error inserting default values");
 
-    println!("pre-init done");
+    info!("pre-init done");
 
     let mut client = Client::new(&config["token"], Handler).unwrap();
     client.with_framework(
@@ -176,29 +175,35 @@ fn main() {
             .on_dispatch_error(|_ctx, msg, error| {
                 if let DispatchError::RateLimited(seconds) = error {
                     info!("Hivemind cooldown for {} more seconds", seconds);
-                    let _ = msg.channel_id.say(&format!("Try this again in {} seconds.", seconds));
+                    let _ = msg
+                        .channel_id
+                        .say(&format!("Try this again in {} seconds.", seconds));
                 }
             })
             .before(|_, msg, command_name| {
-                info!("Got command '{}' by user '{}'",
-                         command_name,
-                         msg.author.name);
+                info!(
+                    "Got command '{}' by user '{}'",
+                    command_name, msg.author.name
+                );
                 true
             })
             .command("ping", |c| c.cmd(ping))
-            .command("stats", |c| c
-                .cmd(stats))
-            .command("hivemind", |c| c
-                // .use_quotes(false)
-                .min_args(0)
-                .guild_only(true)
-                .bucket("hivemind")
-                .cmd(commands::hivemind::hivemind))
-            .command("impersonate", |c| c
-                // .use_quotes(true)
-                .min_args(1)
-                .guild_only(true)
-                .cmd(commands::impersonate::impersonate))
+            .command("stats", |c| c.cmd(stats))
+            .command("hivemind", |c| {
+                c
+                    // .use_quotes(false)
+                    .min_args(0)
+                    .guild_only(true)
+                    .bucket("hivemind")
+                    .cmd(commands::hivemind::hivemind)
+            })
+            .command("impersonate", |c| {
+                c
+                    // .use_quotes(true)
+                    .min_args(1)
+                    .guild_only(true)
+                    .cmd(commands::impersonate::impersonate)
+            })
             .simple_bucket("hivemind", 300),
     );
 

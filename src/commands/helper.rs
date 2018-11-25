@@ -1,15 +1,13 @@
+use chrono::*;
 use diesel;
+use diesel::pg::upsert::excluded;
 use diesel::prelude::*;
 use models::*;
 use schema::messages;
-use serenity::model::prelude::*;
 use serenity::client::Context;
-use diesel::pg::upsert::excluded;
-use chrono::*;
+use serenity::model::prelude::*;
 
 use Sqlpool;
-
-
 
 pub fn download_all_messages(guild: &Guild, _ctx: &Context) {
     let channels = guild.channels().expect("Channels not found");
@@ -69,13 +67,13 @@ pub fn download_all_messages(guild: &Guild, _ctx: &Context) {
             let message_vec = _messages.to_vec();
             let mut transformed_message_vec = Vec::new();
             for message in message_vec {
-                let vals = InsertableMessage{
+                let vals = InsertableMessage {
                     id: message.id.0 as i64,
                     channel_id: message.channel_id.0 as i64,
                     author: message.author.id.0 as i64,
                     content: message.content,
                     timestamp: message.timestamp,
-            };
+                };
 
                 transformed_message_vec.push(vals);
                 //println!("{:?}", message);
@@ -116,13 +114,12 @@ fn biggest_id_exists_in_db(biggest_id: i64, _ctx: &Context) -> bool {
     let conn;
 
     {
-    let mut data = _ctx.data.lock();
-    let sql_pool = data.get_mut::<Sqlpool>().unwrap().clone();
-    
-    conn = sql_pool.get().unwrap();
+        let mut data = _ctx.data.lock();
+        let sql_pool = data.get_mut::<Sqlpool>().unwrap().clone();
+
+        conn = sql_pool.get().unwrap();
     }
 
-    
     use schema::messages;
     use schema::messages::dsl::*;
 
@@ -139,12 +136,12 @@ fn biggest_id_exists_in_db(biggest_id: i64, _ctx: &Context) -> bool {
 
 fn get_latest_id_for_channel(chan_id: i64, _ctx: &Context) -> i64 {
     let conn;
-    
+
     {
-    let mut data = _ctx.data.lock();
-    let sql_pool = data.get_mut::<Sqlpool>().unwrap().clone();
-    
-    conn = sql_pool.get().unwrap();
+        let mut data = _ctx.data.lock();
+        let sql_pool = data.get_mut::<Sqlpool>().unwrap().clone();
+
+        conn = sql_pool.get().unwrap();
     }
 
     use schema::messages;
@@ -162,21 +159,17 @@ fn get_latest_id_for_channel(chan_id: i64, _ctx: &Context) -> i64 {
         return 0;
     }
 
-    chan_id_vec
-        .pop()
-        .unwrap()
-        .unwrap_or(0)
-
+    chan_id_vec.pop().unwrap().unwrap_or(0)
 }
 
 pub fn insert_into_db(_ctx: &Context, message_vec: &[InsertableMessage<FixedOffset>]) {
     let conn;
-    
+
     {
-    let mut data = _ctx.data.lock();
-    let sql_pool = data.get_mut::<Sqlpool>().unwrap().clone();
-    
-    conn = sql_pool.get().unwrap();
+        let mut data = _ctx.data.lock();
+        let sql_pool = data.get_mut::<Sqlpool>().unwrap().clone();
+
+        conn = sql_pool.get().unwrap();
     }
 
     let _ = diesel::insert_into(messages::table)
