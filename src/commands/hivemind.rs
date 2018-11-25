@@ -48,15 +48,18 @@ pub fn hivemind(
 
     if !results.is_empty() {
         for m in results {
+            trace!("Feeding message '{}' into chain", m);
             chain.feed_str(&m);
+            
+            let _ = message.channel_id.broadcast_typing();
         }
 
         for line in chain.str_iter_for(count) {
+            trace!("Outgoing message: '{}'", line);
             let _ = message
                 .channel_id
                 .say(content_safe(&line, &ContentSafeOptions::default()));
             //println!("{}", line);
-            let _ = message.channel_id.broadcast_typing();
         }
     } else {
         info!("Requested command has no data available");
