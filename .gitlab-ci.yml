@@ -60,13 +60,14 @@ check:
 #      - cargo/
 #  script: cargo test --release
 #
-deploy_vps:
-  image: "governmentpaas/curl-ssl"
-  stage: deploy
-  script:
-    - curl --version
-    - curl https://tahahawa.me/deploy_markov_bot -f -m 300 -# -S
-  environment:
-    name: taha vps
-  only:
-  - master
+
+#deploy_vps:
+#  image: "governmentpaas/curl-ssl"
+#  stage: deploy
+#  script:
+#    - curl --version
+#    - curl https://tahahawa.me/deploy_markov_bot -f -m 300 -# -S
+#  environment:
+#    name: taha vps
+#  only:
+#  - master
