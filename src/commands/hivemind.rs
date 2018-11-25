@@ -46,12 +46,21 @@ pub fn hivemind(
     //     messages.push(content.unwrap());
     // }
 
+    let mut i = 0;
+    let len = results.len();
+
     if !results.is_empty() {
         for m in results {
             trace!("Feeding message '{}' into chain", m);
             chain.feed_str(&m);
+
+            if i == len / 4 {
+                let _ = message.channel_id.broadcast_typing();
+                i = 0;
+            } else {
+                i += 1;
+            }
             
-            let _ = message.channel_id.broadcast_typing();
         }
 
         for line in chain.str_iter_for(count) {
