@@ -4,11 +4,8 @@ use markov::Chain;
 use serenity::framework::standard::*;
 use serenity::model::prelude::*;
 use serenity::prelude::*;
+use serenity::utils::{content_safe, ContentSafeOptions};
 use Sqlpool;
-use serenity::utils::{
-    content_safe,
-    ContentSafeOptions,
-};
 
 enum IdOrUsername {
     Id(u64),
@@ -33,7 +30,6 @@ pub fn impersonate(
 
     let _ = message.channel_id.broadcast_typing();
 
-
     let guild_arc = message.guild().unwrap();
     let guild = guild_arc.read();
 
@@ -45,12 +41,12 @@ pub fn impersonate(
     let user = member.map(|m| m.user.read());
 
     let conn;
-    
+
     {
-    let mut data = _context.data.lock();
-    let sql_pool = data.get_mut::<Sqlpool>().unwrap().clone();
-    
-    conn = sql_pool.get().unwrap();
+        let mut data = _context.data.lock();
+        let sql_pool = data.get_mut::<Sqlpool>().unwrap().clone();
+
+        conn = sql_pool.get().unwrap();
     }
 
     if let Some(user) = user {
@@ -90,7 +86,7 @@ pub fn impersonate(
             for line in chain.str_iter_for(count) {
                 let _ = message
                     .channel_id
-                .say(content_safe(&line, &ContentSafeOptions::default()));
+                    .say(content_safe(&line, &ContentSafeOptions::default()));
                 //println!("{}", line);
                 let _ = message.channel_id.broadcast_typing();
             }

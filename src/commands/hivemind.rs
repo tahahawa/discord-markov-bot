@@ -4,11 +4,8 @@ use markov::Chain;
 use serenity::framework::standard::*;
 use serenity::model::prelude::*;
 use serenity::prelude::*;
+use serenity::utils::{content_safe, ContentSafeOptions};
 use Sqlpool;
-use serenity::utils::{
-    content_safe,
-    ContentSafeOptions,
-};
 
 pub fn hivemind(
     _context: &mut Context,
@@ -22,12 +19,12 @@ pub fn hivemind(
     let count: usize = args.single_quoted().unwrap_or(1);
 
     let conn;
-    
+
     {
-    let mut data = _context.data.lock();
-    let sql_pool = data.get_mut::<Sqlpool>().unwrap().clone();
-    
-    conn = sql_pool.get().unwrap();
+        let mut data = _context.data.lock();
+        let sql_pool = data.get_mut::<Sqlpool>().unwrap().clone();
+
+        conn = sql_pool.get().unwrap();
     }
 
     let mut chain: Chain<String> = Chain::new();
