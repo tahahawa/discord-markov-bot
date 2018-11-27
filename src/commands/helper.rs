@@ -2,12 +2,12 @@ use chrono::*;
 use diesel;
 use diesel::pg::upsert::excluded;
 use diesel::prelude::*;
-use models::*;
-use schema::messages;
+use crate::models::*;
+use crate::schema::messages;
 use serenity::client::Context;
 use serenity::model::prelude::*;
 
-use Sqlpool;
+use crate::Sqlpool;
 
 pub fn download_all_messages(guild: &Guild, _ctx: &Context) {
     let channels = guild.channels().expect("Channels not found");
@@ -40,19 +40,19 @@ pub fn download_all_messages(guild: &Guild, _ctx: &Context) {
 
         if id == 0 {
             //println!("no message ID");
-            let try = chan.0.messages(|g| g.after(0).limit(100));
-            match try {
+            let r#try = chan.0.messages(|g| g.after(0).limit(100));
+            match r#try {
                 Err(_) => warn!("error getting messages"),
-                _ => _messages = try.unwrap(),
+                _ => _messages = r#try.unwrap(),
             }
         } else {
-            let try = chan
+            let r#try = chan
                 .0
                 .messages(|g| g.after(MessageId(id as u64)).limit(100));
 
-            match try {
+            match r#try {
                 Err(_) => warn!("error getting messages"),
-                _ => _messages = try.unwrap(),
+                _ => _messages = r#try.unwrap(),
             }
         }
 
@@ -85,21 +85,21 @@ pub fn download_all_messages(guild: &Guild, _ctx: &Context) {
 
             if id2 == 0 {
                 //println!("no message ID");
-                let try = chan.0.messages(|g| g.after(0).limit(100));
-                match try {
+                let r#try = chan.0.messages(|g| g.after(0).limit(100));
+                match r#try {
                     Err(_) => warn!("error getting messages"),
-                    _ => _messages = try.unwrap(),
+                    _ => _messages = r#try.unwrap(),
                 }
             } else if id2 >= biggest_id {
                 break;
             } else {
-                let try = chan
+                let r#try = chan
                     .0
                     .messages(|g| g.after(MessageId(id2 as u64)).limit(100));
 
-                match try {
+                match r#try {
                     Err(_) => warn!("error getting messages"),
-                    _ => _messages = try.unwrap(),
+                    _ => _messages = r#try.unwrap(),
                 }
 
                 //println!("id2: {:?}", id2);
@@ -120,8 +120,8 @@ fn biggest_id_exists_in_db(biggest_id: i64, _ctx: &Context) -> bool {
         conn = sql_pool.get().unwrap();
     }
 
-    use schema::messages;
-    use schema::messages::dsl::*;
+    use crate::schema::messages;
+    use crate::schema::messages::dsl::*;
 
     let biggest_id_db_vec = messages::table
         .order(id.desc())
@@ -144,8 +144,8 @@ fn get_latest_id_for_channel(chan_id: i64, _ctx: &Context) -> i64 {
         conn = sql_pool.get().unwrap();
     }
 
-    use schema::messages;
-    use schema::messages::dsl::{channel_id, id};
+    use crate::schema::messages;
+    use crate::schema::messages::dsl::{channel_id, id};
 
     let mut chan_id_vec = messages::table
         .order(id.desc())

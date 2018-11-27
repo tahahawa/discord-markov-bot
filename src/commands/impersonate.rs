@@ -5,7 +5,7 @@ use serenity::framework::standard::*;
 use serenity::model::prelude::*;
 use serenity::prelude::*;
 use serenity::utils::{content_safe, ContentSafeOptions};
-use Sqlpool;
+use crate::Sqlpool;
 
 enum IdOrUsername {
     Id(u64),
@@ -54,7 +54,7 @@ pub fn impersonate(
 
         // use schema::messages;
         // use models::*;
-        use schema::messages::dsl::*;
+        use crate::schema::messages::dsl::*;
 
         let results = messages
             .select(content)

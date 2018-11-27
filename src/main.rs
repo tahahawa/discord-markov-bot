@@ -30,7 +30,7 @@ use serenity::prelude::*;
 use chrono::*;
 use diesel::pg::PgConnection;
 use diesel::prelude::*;
-use models::*;
+use crate::models::*;
 
 pub mod commands;
 pub mod models;
@@ -150,7 +150,7 @@ fn main() {
 
     let conn = pool.get().unwrap();
 
-    use schema::messages;
+    use crate::schema::messages;
 
     let def_vals = models::InsertableMessage {
         id: 0,
