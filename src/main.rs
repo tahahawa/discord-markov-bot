@@ -7,16 +7,16 @@ extern crate serenity;
 #[macro_use]
 extern crate log;
 
-extern crate pretty_env_logger;
+use pretty_env_logger;
 
-extern crate bigdecimal;
-extern crate num;
 
-extern crate markov;
-extern crate serde_yaml;
-extern crate typemap;
 
-extern crate chrono;
+
+
+use serde_yaml;
+
+
+
 
 use std::collections::BTreeMap;
 use std::fs::File;
