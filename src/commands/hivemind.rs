@@ -5,7 +5,7 @@ use serenity::framework::standard::*;
 use serenity::model::prelude::*;
 use serenity::prelude::*;
 use serenity::utils::{content_safe, ContentSafeOptions};
-use Sqlpool;
+use crate::Sqlpool;
 
 pub fn hivemind(
     _context: &mut Context,
@@ -29,7 +29,7 @@ pub fn hivemind(
 
     let mut chain: Chain<String> = Chain::new();
 
-    use schema::messages::dsl::*;
+    use crate::schema::messages::dsl::*;
 
     let results = messages
         .select(content)

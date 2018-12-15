@@ -10,7 +10,7 @@ variables:
 build:
   image: "rust"
   before_script:
-    - apt-get update -qq && apt-get install -y -qq libssl-dev pkg-config libsqlite3-dev
+    - apt-get update -qq && apt-get install -y -qq libssl-dev pkg-config
     - cargo --version
     - rustc --version
     - cargo update
@@ -31,7 +31,7 @@ build:
 check:
   image: "rust"
   before_script:
-    - apt-get update -qq && apt-get install -y -qq libssl-dev pkg-config libsqlite3-dev
+    - apt-get update -qq && apt-get install -y -qq libssl-dev pkg-config
     - cargo --version
     - rustc --version
     - cargo update
@@ -49,7 +49,7 @@ check:
 #test:
 #  image: "rust"
 #  before_script:
-#    - apt-get update -qq && apt-get install -y -qq libssl-dev pkg-config libsodium-dev libsqlite3-dev
+#    - apt-get update -qq && apt-get install -y -qq libssl-dev pkg-config libsodium-dev
 #    - cargo --version
 #    - rustc --version
 #  stage: test
