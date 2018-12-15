@@ -7,16 +7,16 @@ extern crate serenity;
 #[macro_use]
 extern crate log;
 
-extern crate pretty_env_logger;
+use pretty_env_logger;
 
-extern crate bigdecimal;
-extern crate num;
 
-extern crate markov;
-extern crate serde_yaml;
-extern crate typemap;
 
-extern crate chrono;
+
+
+use serde_yaml;
+
+
+
 
 use std::collections::BTreeMap;
 use std::fs::File;
@@ -30,7 +30,7 @@ use serenity::prelude::*;
 use chrono::*;
 use diesel::pg::PgConnection;
 use diesel::prelude::*;
-use models::*;
+use crate::models::*;
 
 pub mod commands;
 pub mod models;
@@ -150,7 +150,7 @@ fn main() {
 
     let conn = pool.get().unwrap();
 
-    use schema::messages;
+    use crate::schema::messages;
 
     let def_vals = models::InsertableMessage {
         id: 0,
