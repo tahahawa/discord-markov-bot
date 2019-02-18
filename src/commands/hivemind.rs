@@ -30,12 +30,15 @@ pub fn hivemind(
     let mut chain: Chain<String> = Chain::new();
 
     use crate::schema::messages::dsl::*;
+    no_arg_sql_function!(RANDOM, (), "sql RANDOM()");
 
     let results = messages
         .select(content)
         .filter(not(content.like("%~hivemind%")))
         .filter(not(content.like("%~impersonate%")))
         .filter(not(content.like("%~ping%")))
+        .limit(10000)
+        .order(RANDOM)
         .load::<String>(&conn)
         .expect("Error loading messages");
     // let mut stmt = conn.prepare("SELECT * FROM messages where content not like '%~hivemind%' and content not like '%~impersonate%' and content not like '%~ping%' ").unwrap();

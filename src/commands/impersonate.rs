@@ -56,12 +56,16 @@ pub fn impersonate(
         // use models::*;
         use crate::schema::messages::dsl::*;
 
+        no_arg_sql_function!(RANDOM, (), "sql RANDOM()");
+
         let results = messages
             .select(content)
             .filter(author.eq(user.id.0 as i64))
             .filter(not(content.like("%~hivemind%")))
             .filter(not(content.like("%~impersonate%")))
             .filter(not(content.like("%~ping%")))
+            .limit(10000)
+            .order(RANDOM)
             .load::<String>(&conn)
             .expect("Error loading messages");
 
