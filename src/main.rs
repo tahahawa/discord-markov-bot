@@ -51,26 +51,53 @@ command!(ping(_ctx, msg, _args){
 });
 
 command!(stats(_ctx, msg, _args){
-        let cache = serenity::CACHE.read();
-        let mut guild_names: Vec<String> = Vec::new();
+    let conn;
+    {
+        let mut data = _ctx.data.lock();
+        let sql_pool = data.get_mut::<Sqlpool>().unwrap().clone();
+        conn = sql_pool.get().unwrap();
+    }
+    
+    let cache = serenity::CACHE.read();
+    let mut guild_names: Vec<String> = Vec::new();
+    
+    for (x, _) in cache.clone().guilds {
+        guild_names.push(x.to_partial_guild().unwrap().name);
+    }
 
-        for (id, _) in cache.clone().guilds {
-            guild_names.push(id.to_partial_guild().unwrap().name);
-        }
+    use diesel::sql_types::*;
 
-        info!("guilds: {:?}; channels: {}; users: {}", 
-        guild_names,
-        cache.channels.len(),
-        cache.users.len());
+    #[derive(QueryableByName)]
+    struct Temp {
+        #[sql_type = "BigInt"]
+        count: i64,
+    }
+
+    let unique_users = diesel::sql_query(r#"SELECT COUNT(*) FROM (SELECT DISTINCT author FROM messages) AS temp"#)
+        .load::<Temp>(&conn)
+        .expect("Query failed")
+        .pop()
+        .expect("No rows")
+        .count - 1;
+    
+    let unique_channels = diesel::sql_query(r#"SELECT COUNT(*) FROM (SELECT DISTINCT channel_id FROM messages) AS temp"#)
+        .load::<Temp>(&conn)
+        .expect("Query failed")
+        .pop()
+        .expect("No rows")
+        .count - 1;
 
 
-        if let Err(why) = msg.channel_id.say(
-            format!("guilds: {:?}; channels: {}; users: {}", 
-            guild_names,
-            cache.channels.len(),
-            cache.users.len())){
-                info!("Error sending message: {:?}", why);
-                };
+    info!("guilds: ({}) {:?}", 
+    guild_names.len(), guild_names.len());
+
+    if let Err(why) = msg.channel_id.say(
+        format!("guilds: ({}) {:?}; channels: {}; users: {}", 
+        guild_names.len(), guild_names,
+        unique_channels,
+        unique_users)){
+            info!("Error sending message: {:?}", why);
+            };
 });
 
 struct Handler;
