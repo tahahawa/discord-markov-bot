@@ -5,11 +5,11 @@ authors = ["Taha Hawa <tahahawa@gmail.com>"]
 edition = "2018"
 
 [dependencies]
-serde = "1.0.88"
+serde = "1.0.89"
 serde_yaml = "0.8.8"
 markov = "1.0.2"
 typemap = "0.3.3"
-diesel = {version = "1.4.1",features = ["postgres","r2d2", "numeric", "bigdecimal", "chrono"]}
+diesel = {version = "1.4.2",features = ["postgres","r2d2", "numeric", "bigdecimal", "chrono"]}
 num = "0.2.0"
 bigdecimal = "0.0.15"
 chrono = "0.4.6"
@@ -21,6 +21,7 @@ git = "https://github.com/serenity-rs/serenity.git"
 # git = "https://github.com/tahahawa/serenity.git"
 branch = "current"
 default-features = false
+version = '0.5'
 features = ["cache", "framework", "builder", "client", "utils", "model", "standard_framework"]
 
 [patch.crates-io]
