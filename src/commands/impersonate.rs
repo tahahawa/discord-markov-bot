@@ -33,12 +33,10 @@ pub fn impersonate(
     let guild_arc = message.guild().unwrap();
     let guild = guild_arc.read();
 
-    let member = match fetch_from {
-        IdOrUsername::Id(id) => guild.members.get(&UserId(id)),
-        IdOrUsername::Username(username) => guild.member_named(&username),
+    let user = match fetch_from {
+        IdOrUsername::Id(id) => Some(UserId(id)),
+        IdOrUsername::Username(username) => guild.member_named(&username).and_then(|m| Some(m.user_id())),
     };
-
-    let user = member.map(|m| m.user.read());
 
     let conn;
 
@@ -60,7 +58,7 @@ pub fn impersonate(
 
         let results = messages
             .select(content)
-            .filter(author.eq(user.id.0 as i64))
+            .filter(author.eq(user.0 as i64))
             .filter(not(content.like("%~hivemind%")))
             .filter(not(content.like("%~impersonate%")))
             .filter(not(content.like("%~ping%")))
@@ -109,7 +107,7 @@ pub fn impersonate(
             }
         } else {
             info!("Requested command has no data available");
-            let _ = message.reply("They haven't said anything");
+            let _ = message.reply("Either they've never said anything, or I haven't seen them");
         }
     // } else if user.is_some() {
     //     let user = user.unwrap();
