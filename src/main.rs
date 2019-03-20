@@ -45,7 +45,7 @@ impl Key for Sqlpool {
 }
 
 command!(ping(_ctx, msg, _args){
-    if let Err(why) = msg.channel_id.say("Pong!") {
+    if let Err(why) = msg.channel_id.say(&_ctx.http,"Pong!") {
         warn!("Error sending message: {:?}", why);
     }
 });
@@ -53,16 +53,16 @@ command!(ping(_ctx, msg, _args){
 command!(stats(_ctx, msg, _args){
     let conn;
     {
-        let mut data = _ctx.data.lock();
+        let mut data = _ctx.data.write();
         let sql_pool = data.get_mut::<Sqlpool>().unwrap().clone();
         conn = sql_pool.get().unwrap();
     }
     
-    let cache = serenity::CACHE.read();
+    let cache = _ctx.cache.read();
     let mut guild_names: Vec<String> = Vec::new();
     
-    for (x, _) in cache.clone().guilds {
-        guild_names.push(x.to_partial_guild().unwrap().name);
+    for (x, _) in cache.guilds.clone() {
+        guild_names.push(x.to_partial_guild(&_ctx.http).unwrap().name);
     }
 
     use diesel::sql_types::*;
@@ -91,7 +91,7 @@ command!(stats(_ctx, msg, _args){
     info!("guilds: ({}) {:?}", 
     guild_names.len(), guild_names.len());
 
-    if let Err(why) = msg.channel_id.say(
+    if let Err(why) = msg.channel_id.say(&_ctx.http,
         format!("guilds: ({}) {:?}; channels: {}; users: {}", 
         guild_names.len(), guild_names,
         unique_channels,
@@ -204,7 +204,7 @@ fn main() {
                     info!("Hivemind cooldown for {} more seconds", seconds);
                     let _ = msg
                         .channel_id
-                        .say(&format!("Try this again in {} seconds.", seconds));
+                        .say(&_ctx.http, &format!("Try this again in {} seconds.", seconds));
                 }
             })
             .before(|_, msg, command_name| {
@@ -235,7 +235,7 @@ fn main() {
     );
 
     {
-        let mut data = client.data.lock();
+        let mut data = client.data.write();
         data.insert::<Sqlpool>(pool.clone());
     }
 

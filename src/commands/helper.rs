@@ -10,7 +10,7 @@ use serenity::model::prelude::*;
 use crate::Sqlpool;
 
 pub fn download_all_messages(guild: &Guild, _ctx: &Context) {
-    let channels = guild.channels().expect("Channels not found");
+    let channels = guild.channels(&_ctx.http).expect("Channels not found");
 
     for chan in channels {
         let mut _messages = Vec::new();
@@ -40,7 +40,7 @@ pub fn download_all_messages(guild: &Guild, _ctx: &Context) {
 
         if id == 0 {
             //println!("no message ID");
-            let r#try = chan.0.messages(|g| g.after(0).limit(100));
+            let r#try = chan.0.messages(&_ctx.http, |g| g.after(0).limit(100));
             match r#try {
                 Err(_) => warn!("error getting messages"),
                 _ => _messages = r#try.unwrap(),
@@ -48,7 +48,7 @@ pub fn download_all_messages(guild: &Guild, _ctx: &Context) {
         } else {
             let r#try = chan
                 .0
-                .messages(|g| g.after(MessageId(id as u64)).limit(100));
+                .messages(&_ctx.http, |g| g.after(MessageId(id as u64)).limit(100));
 
             match r#try {
                 Err(_) => warn!("error getting messages"),
@@ -57,7 +57,7 @@ pub fn download_all_messages(guild: &Guild, _ctx: &Context) {
         }
 
         while !_messages.is_empty() {
-            let _ = chan.0.broadcast_typing();
+            let _ = chan.0.broadcast_typing(&_ctx.http);
             info!(
                 "storing {} messages from #{} on {}",
                 _messages.len(),
@@ -85,7 +85,7 @@ pub fn download_all_messages(guild: &Guild, _ctx: &Context) {
 
             if id2 == 0 {
                 //println!("no message ID");
-                let r#try = chan.0.messages(|g| g.after(0).limit(100));
+                let r#try = chan.0.messages(&_ctx.http,|g| g.after(0).limit(100));
                 match r#try {
                     Err(_) => warn!("error getting messages"),
                     _ => _messages = r#try.unwrap(),
@@ -95,7 +95,7 @@ pub fn download_all_messages(guild: &Guild, _ctx: &Context) {
             } else {
                 let r#try = chan
                     .0
-                    .messages(|g| g.after(MessageId(id2 as u64)).limit(100));
+                    .messages(&_ctx.http,|g| g.after(MessageId(id2 as u64)).limit(100));
 
                 match r#try {
                     Err(_) => warn!("error getting messages"),
@@ -114,7 +114,7 @@ fn biggest_id_exists_in_db(biggest_id: i64, _ctx: &Context) -> bool {
     let conn;
 
     {
-        let mut data = _ctx.data.lock();
+        let mut data = _ctx.data.write();
         let sql_pool = data.get_mut::<Sqlpool>().unwrap().clone();
 
         conn = sql_pool.get().unwrap();
@@ -138,7 +138,7 @@ fn get_latest_id_for_channel(chan_id: i64, _ctx: &Context) -> i64 {
     let conn;
 
     {
-        let mut data = _ctx.data.lock();
+        let mut data = _ctx.data.write();
         let sql_pool = data.get_mut::<Sqlpool>().unwrap().clone();
 
         conn = sql_pool.get().unwrap();
@@ -166,7 +166,7 @@ pub fn insert_into_db(_ctx: &Context, message_vec: &[InsertableMessage<FixedOffs
     let conn;
 
     {
-        let mut data = _ctx.data.lock();
+        let mut data = _ctx.data.write();
         let sql_pool = data.get_mut::<Sqlpool>().unwrap().clone();
 
         conn = sql_pool.get().unwrap();

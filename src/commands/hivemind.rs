@@ -12,7 +12,7 @@ pub fn hivemind(
     message: &Message,
     mut args: Args,
 ) -> Result<(), CommandError> {
-    let _ = message.channel_id.broadcast_typing();
+    let _ = message.channel_id.broadcast_typing(&_context.http);
 
     debug!("args: {:?}", args);
 
@@ -21,7 +21,7 @@ pub fn hivemind(
     let conn;
 
     {
-        let mut data = _context.data.lock();
+        let mut data = _context.data.write();
         let sql_pool = data.get_mut::<Sqlpool>().unwrap().clone();
 
         conn = sql_pool.get().unwrap();
@@ -58,7 +58,7 @@ pub fn hivemind(
             chain.feed_str(&m);
 
             if i == len / 4 {
-                let _ = message.channel_id.broadcast_typing();
+                let _ = message.channel_id.broadcast_typing(&_context.http);
                 i = 0;
             } else {
                 i += 1;
@@ -70,12 +70,12 @@ pub fn hivemind(
             trace!("Outgoing message: '{}'", line);
             let _ = message
                 .channel_id
-                .say(content_safe(&line, &ContentSafeOptions::default()));
+                .say(&_context.http, content_safe(&_context.cache, &line, &ContentSafeOptions::default()));
             //println!("{}", line);
         }
     } else {
         info!("Requested command has no data available");
-        let _ = message.reply("They haven't said anything");
+        let _ = message.reply(_context, "They haven't said anything");
     }
     Ok(())
 }

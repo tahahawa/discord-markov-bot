@@ -28,9 +28,9 @@ pub fn impersonate(
 
     // let chan = message.channel_id.get().unwrap();
 
-    let _ = message.channel_id.broadcast_typing();
+    let _ = message.channel_id.broadcast_typing(&_context.http);
 
-    let guild_arc = message.guild().unwrap();
+    let guild_arc = message.guild(&_context.cache).unwrap();
     let guild = guild_arc.read();
 
     let user = match fetch_from {
@@ -41,7 +41,7 @@ pub fn impersonate(
     let conn;
 
     {
-        let mut data = _context.data.lock();
+        let mut data = _context.data.write();
         let sql_pool = data.get_mut::<Sqlpool>().unwrap().clone();
 
         conn = sql_pool.get().unwrap();
@@ -85,7 +85,7 @@ pub fn impersonate(
                 chain.feed_str(&m);
 
                 if i == len / 4 {
-                    let _ = message.channel_id.broadcast_typing();
+                    let _ = message.channel_id.broadcast_typing(&_context.http);
                     i = 0;
                 } else {
                     i += 1;
@@ -97,17 +97,17 @@ pub fn impersonate(
 
             // let iter: usize = iter_test.parse::<usize>().unwrap_or(1);
 
-            let _ = message.channel_id.broadcast_typing();
+            let _ = message.channel_id.broadcast_typing(&_context.http);
 
             for line in chain.str_iter_for(count) {
                 trace!("Outgoing message: '{}'", line);
                 let _ = message
                     .channel_id
-                    .say(content_safe(&line, &ContentSafeOptions::default()));
+                    .say(&_context.http, content_safe(&_context.cache, &line, &ContentSafeOptions::default()));
             }
         } else {
             info!("Requested command has no data available");
-            let _ = message.reply("Either they've never said anything, or I haven't seen them");
+            let _ = message.reply(&_context,"Either they've never said anything, or I haven't seen them");
         }
     // } else if user.is_some() {
     //     let user = user.unwrap();
@@ -136,7 +136,7 @@ pub fn impersonate(
     //     }
     } else {
         info!("User not found");
-        let _ = message.reply("No user found");
+        let _ = message.reply(&_context, "No user found");
     }
     Ok(())
 }
