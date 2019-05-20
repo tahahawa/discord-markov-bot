@@ -1,17 +1,24 @@
 use diesel::dsl::*;
 use diesel::prelude::*;
 use markov::Chain;
-use serenity::framework::standard::*;
-use serenity::model::prelude::*;
+use serenity::{
+    framework::standard::{
+        Args, CommandResult,
+        macros::{command},
+    },
+    model::{
+        channel::{Message},
+    },
+    utils::{content_safe, ContentSafeOptions},
+};
+
 use serenity::prelude::*;
-use serenity::utils::{content_safe, ContentSafeOptions};
+
 use crate::Sqlpool;
 
-pub fn hivemind(
-    _context: &mut Context,
-    message: &Message,
-    mut args: Args,
-) -> Result<(), CommandError> {
+#[command]
+#[min_args(0)]
+pub fn hivemind(_context: &mut Context, message: &Message, mut args: Args) -> CommandResult {
     let _ = message.channel_id.broadcast_typing(&_context.http);
 
     debug!("args: {:?}", args);
@@ -63,14 +70,14 @@ pub fn hivemind(
             } else {
                 i += 1;
             }
-            
         }
 
         for line in chain.str_iter_for(count) {
             trace!("Outgoing message: '{}'", line);
-            let _ = message
-                .channel_id
-                .say(&_context.http, content_safe(&_context.cache, &line, &ContentSafeOptions::default()));
+            let _ = message.channel_id.say(
+                &_context.http,
+                content_safe(&_context.cache, &line, &ContentSafeOptions::default()),
+            );
             //println!("{}", line);
         }
     } else {

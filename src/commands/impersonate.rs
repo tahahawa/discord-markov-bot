@@ -1,10 +1,20 @@
 use diesel::dsl::*;
 use diesel::prelude::*;
 use markov::Chain;
-use serenity::framework::standard::*;
-use serenity::model::prelude::*;
+use serenity::{
+    framework::standard::{
+        Args, CommandResult,
+        macros::{command},
+    },
+    model::{
+        channel::{Message},
+        id::UserId,
+    },
+    utils::{content_safe, ContentSafeOptions},
+};
+
 use serenity::prelude::*;
-use serenity::utils::{content_safe, ContentSafeOptions};
+
 use crate::Sqlpool;
 
 enum IdOrUsername {
@@ -12,11 +22,9 @@ enum IdOrUsername {
     Username(String),
 }
 
-pub fn impersonate(
-    _context: &mut Context,
-    message: &Message,
-    mut args: Args,
-) -> Result<(), CommandError> {
+#[command]
+#[min_args(1)]
+pub fn impersonate(_context: &mut Context, message: &Message, mut args: Args) -> CommandResult {
     debug!("args: {:?}", args);
 
     let fetch_from = match args.single::<u64>() {
@@ -35,7 +43,9 @@ pub fn impersonate(
 
     let user = match fetch_from {
         IdOrUsername::Id(id) => Some(UserId(id)),
-        IdOrUsername::Username(username) => guild.member_named(&username).and_then(|m| Some(m.user_id())),
+        IdOrUsername::Username(username) => guild
+            .member_named(&username)
+            .and_then(|m| Some(m.user_id())),
     };
 
     let conn;
@@ -90,7 +100,6 @@ pub fn impersonate(
                 } else {
                     i += 1;
                 }
-
             }
 
             // let iter_test = re_iter.replace_all(&count, "");
@@ -101,13 +110,17 @@ pub fn impersonate(
 
             for line in chain.str_iter_for(count) {
                 trace!("Outgoing message: '{}'", line);
-                let _ = message
-                    .channel_id
-                    .say(&_context.http, content_safe(&_context.cache, &line, &ContentSafeOptions::default()));
+                let _ = message.channel_id.say(
+                    &_context.http,
+                    content_safe(&_context.cache, &line, &ContentSafeOptions::default()),
+                );
             }
         } else {
             info!("Requested command has no data available");
-            let _ = message.reply(&_context,"Either they've never said anything, or I haven't seen them");
+            let _ = message.reply(
+                &_context,
+                "Either they've never said anything, or I haven't seen them",
+            );
         }
     // } else if user.is_some() {
     //     let user = user.unwrap();

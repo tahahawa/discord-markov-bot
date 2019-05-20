@@ -1,9 +1,9 @@
+use crate::models::*;
+use crate::schema::messages;
 use chrono::*;
 use diesel;
 use diesel::pg::upsert::excluded;
 use diesel::prelude::*;
-use crate::models::*;
-use crate::schema::messages;
 use serenity::client::Context;
 use serenity::model::prelude::*;
 
@@ -85,7 +85,7 @@ pub fn download_all_messages(guild: &Guild, _ctx: &Context) {
 
             if id2 == 0 {
                 //println!("no message ID");
-                let r#try = chan.0.messages(&_ctx.http,|g| g.after(0).limit(100));
+                let r#try = chan.0.messages(&_ctx.http, |g| g.after(0).limit(100));
                 match r#try {
                     Err(_) => warn!("error getting messages"),
                     _ => _messages = r#try.unwrap(),
@@ -95,7 +95,7 @@ pub fn download_all_messages(guild: &Guild, _ctx: &Context) {
             } else {
                 let r#try = chan
                     .0
-                    .messages(&_ctx.http,|g| g.after(MessageId(id2 as u64)).limit(100));
+                    .messages(&_ctx.http, |g| g.after(MessageId(id2 as u64)).limit(100));
 
                 match r#try {
                     Err(_) => warn!("error getting messages"),

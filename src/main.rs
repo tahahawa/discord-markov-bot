@@ -2,39 +2,45 @@
 extern crate diesel;
 
 #[macro_use]
-extern crate serenity;
-
-#[macro_use]
 extern crate log;
 
 use pretty_env_logger;
 
-
-
-
-
 use serde_yaml;
 
+use serenity::{
+    framework::standard::{
+        Args, CommandResult, StandardFramework,
+        macros::{command},
+        macros::group,
+    },
+    model::{
+        channel::{Message},
+        gateway::Ready,
+    },
+};
 
-
+// This imports `typemap`'s `Key` as `TypeMapKey`.
+use serenity::prelude::*;
 
 use std::collections::BTreeMap;
 use std::fs::File;
 use std::io::Read;
 use typemap::Key;
 
-use serenity::framework::standard::*;
 use serenity::model::prelude::*;
-use serenity::prelude::*;
 
+use crate::models::*;
 use chrono::*;
 use diesel::pg::PgConnection;
 use diesel::prelude::*;
-use crate::models::*;
 
 pub mod commands;
 pub mod models;
 pub mod schema;
+
+use commands::hivemind::HIVEMIND_COMMAND;
+use commands::impersonate::IMPERSONATE_COMMAND;
 
 pub type Pool = diesel::r2d2::Pool<diesel::r2d2::ConnectionManager<PgConnection>>;
 
@@ -44,23 +50,26 @@ impl Key for Sqlpool {
     type Value = Pool;
 }
 
-command!(ping(_ctx, msg, _args){
-    if let Err(why) = msg.channel_id.say(&_ctx.http,"Pong!") {
+#[command]
+fn ping(_ctx: &mut Context, msg: &Message, _args: Args) -> CommandResult {
+    if let Err(why) = msg.channel_id.say(&_ctx.http, "Pong!") {
         warn!("Error sending message: {:?}", why);
     }
-});
+    Ok(())
+}
 
-command!(stats(_ctx, msg, _args){
+#[command]
+fn stats(_ctx: &mut Context, msg: &Message, _args: Args) -> CommandResult {
     let conn;
     {
         let mut data = _ctx.data.write();
         let sql_pool = data.get_mut::<Sqlpool>().unwrap().clone();
         conn = sql_pool.get().unwrap();
     }
-    
+
     let cache = _ctx.cache.read();
     let mut guild_names: Vec<String> = Vec::new();
-    
+
     for (x, _) in cache.guilds.clone() {
         guild_names.push(x.to_partial_guild(&_ctx.http).unwrap().name);
     }
@@ -73,32 +82,41 @@ command!(stats(_ctx, msg, _args){
         count: i64,
     }
 
-    let unique_users = diesel::sql_query(r#"SELECT COUNT(*) FROM (SELECT DISTINCT author FROM messages) AS temp"#)
-        .load::<Temp>(&conn)
-        .expect("Query failed")
-        .pop()
-        .expect("No rows")
-        .count - 1;
-    
-    let unique_channels = diesel::sql_query(r#"SELECT COUNT(*) FROM (SELECT DISTINCT channel_id FROM messages) AS temp"#)
-        .load::<Temp>(&conn)
-        .expect("Query failed")
-        .pop()
-        .expect("No rows")
-        .count - 1;
+    let unique_users =
+        diesel::sql_query(r#"SELECT COUNT(*) FROM (SELECT DISTINCT author FROM messages) AS temp"#)
+            .load::<Temp>(&conn)
+            .expect("Query failed")
+            .pop()
+            .expect("No rows")
+            .count
+            - 1;
 
+    let unique_channels = diesel::sql_query(
+        r#"SELECT COUNT(*) FROM (SELECT DISTINCT channel_id FROM messages) AS temp"#,
+    )
+    .load::<Temp>(&conn)
+    .expect("Query failed")
+    .pop()
+    .expect("No rows")
+    .count
+        - 1;
 
-    info!("guilds: ({}) {:?}", 
-    guild_names.len(), guild_names.len());
+    info!("guilds: ({}) {:?}", guild_names.len(), guild_names.len());
 
-    if let Err(why) = msg.channel_id.say(&_ctx.http,
-        format!("guilds: ({}) {:?}; channels: {}; users: {}", 
-        guild_names.len(), guild_names,
-        unique_channels,
-        unique_users)){
-            info!("Error sending message: {:?}", why);
-            };
-});
+    if let Err(why) = msg.channel_id.say(
+        &_ctx.http,
+        format!(
+            "guilds: ({}) {:?}; channels: {}; users: {}",
+            guild_names.len(),
+            guild_names,
+            unique_channels,
+            unique_users
+        ),
+    ) {
+        info!("Error sending message: {:?}", why);
+    };
+    Ok(())
+}
 
 struct Handler;
 
@@ -157,6 +175,12 @@ impl EventHandler for Handler {
     });*/
 }
 
+group!({
+    name: "general",
+    options: {},
+    commands: [ping, stats, impersonate, hivemind]
+});
+
 fn main() {
     pretty_env_logger::init();
 
@@ -199,14 +223,6 @@ fn main() {
     client.with_framework(
         StandardFramework::new()
             .configure(|c| c.prefix("~")) // set the bot's prefix to "~"
-            .on_dispatch_error(|_ctx, msg, error| {
-                if let DispatchError::RateLimited(seconds) = error {
-                    info!("Hivemind cooldown for {} more seconds", seconds);
-                    let _ = msg
-                        .channel_id
-                        .say(&_ctx.http, &format!("Try this again in {} seconds.", seconds));
-                }
-            })
             .before(|_, msg, command_name| {
                 info!(
                     "Got command '{}' by user '{}'",
@@ -214,24 +230,7 @@ fn main() {
                 );
                 true
             })
-            .command("ping", |c| c.cmd(ping))
-            .command("stats", |c| c.cmd(stats))
-            .command("hivemind", |c| {
-                c
-                    // .use_quotes(false)
-                    .min_args(0)
-                    .guild_only(true)
-                    .bucket("hivemind")
-                    .cmd(commands::hivemind::hivemind)
-            })
-            .command("impersonate", |c| {
-                c
-                    // .use_quotes(true)
-                    .min_args(1)
-                    .guild_only(true)
-                    .cmd(commands::impersonate::impersonate)
-            })
-            .simple_bucket("hivemind", 300),
+            .group(&GENERAL_GROUP),
     );
 
     {

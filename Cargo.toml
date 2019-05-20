@@ -1,17 +1,17 @@
 [package]
 name = "discord-markov-bot"
-version = "0.7.0"
+version = "0.8.0"
 authors = ["Taha Hawa <tahahawa@gmail.com>"]
 edition = "2018"
 
 [dependencies]
-serde = "1.0.89"
-serde_yaml = "0.8.8"
+serde = "1.0.91"
+serde_yaml = "0.8.9"
 markov = "1.0.2"
 typemap = "0.3.3"
 diesel = {version = "1.4.2",features = ["postgres","r2d2", "numeric", "bigdecimal", "chrono"]}
 num = "0.2.0"
-bigdecimal = "0.0.15"
+bigdecimal = "0.1.0"
 chrono = "0.4.6"
 log = "0.4.6"
 pretty_env_logger = "0.3.0"
@@ -22,7 +22,7 @@ git = "https://github.com/serenity-rs/serenity.git"
 branch = "v0.6.x"
 default-features = false
 # version = '0.5'
-features = ["cache", "framework", "builder", "client", "utils", "model", "standard_framework"]
+features = ["cache", "framework", "builder", "client", "utils", "model", "standard_framework", "rustls_backend"]
 
 # [patch.crates-io]
 # openssl = { git = "https://github.com/ishitatsuyuki/rust-openssl", branch = "0.9.x" }
