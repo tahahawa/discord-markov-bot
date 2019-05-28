@@ -120,10 +120,9 @@ fn biggest_id_exists_in_db(biggest_id: i64, _ctx: &Context) -> bool {
         conn = sql_pool.get().unwrap();
     }
 
-    use crate::schema::messages;
     use crate::schema::messages::dsl::*;
 
-    let biggest_id_db_vec = messages::table
+    let biggest_id_db_vec = crate::schema::messages::table
         .order(id.desc())
         .select(id)
         .limit(1)
@@ -144,10 +143,9 @@ fn get_latest_id_for_channel(chan_id: i64, _ctx: &Context) -> i64 {
         conn = sql_pool.get().unwrap();
     }
 
-    use crate::schema::messages;
     use crate::schema::messages::dsl::{channel_id, id};
 
-    let mut chan_id_vec = messages::table
+    let mut chan_id_vec = crate::schema::messages::table
         .order(id.desc())
         .select(id)
         .limit(1)

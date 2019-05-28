@@ -38,12 +38,9 @@ pub fn impersonate(_context: &mut Context, message: &Message, mut args: Args) ->
 
     let _ = message.channel_id.broadcast_typing(&_context.http);
 
-    let guild_arc = message.guild(&_context.cache).unwrap();
-    let guild = guild_arc.read();
-
     let user = match fetch_from {
         IdOrUsername::Id(id) => Some(UserId(id)),
-        IdOrUsername::Username(username) => guild
+        IdOrUsername::Username(username) => message.guild(&_context.cache).unwrap().read()
             .member_named(&username)
             .and_then(|m| Some(m.user_id())),
     };
